@@ -3,9 +3,9 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open("app-cache").then((cache) => {
       return cache.addAll([
-        "/",          // index.html
-        "/icono.jpg", // ícono
-        "/manifest.json"
+        "/ProtocolarPDF/",          // index
+        "/ProtocolarPDF/icono.jpg", // ícono
+        "/ProtocolarPDF/manifest.json"
       ]);
     })
   );
