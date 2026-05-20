@@ -1410,7 +1410,9 @@
       document.getElementById("editor").style.fontFamily      = value;
       document.getElementById("linenumbers").style.fontFamily = value;
       document.getElementById("fuenteEtiqueta").innerText     = 'Fuente en uso: ' + value;
+      localStorage.setItem('protocolarFuente', value); 
     }
+    
     function getFuenteConfig() {
       const editor = document.getElementById("editor");
       return { fuente: editor.style.fontFamily || "Arial", tamanoFuente: parseInt(document.getElementById("tamanoFuente").value, 10) || 11 };
@@ -1807,9 +1809,13 @@
       cambiarladopagina("1");
       actualizarStatus('✅ DOM listo — ' + mensajeInicio);
 
+      const savedFuente = localStorage.getItem('protocolarFuente');
+      if (savedFuente) aplicarFuente(savedFuente);
+      
       // Restore saved theme
       const savedTheme = localStorage.getItem('protocolarTheme');
-      if (savedTheme === 'light') applyTheme('light');
+      if (savedTheme === 'light') applyTheme('light');  
+    
     });
 
     function toggleTheme() {
