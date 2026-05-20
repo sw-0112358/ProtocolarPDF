@@ -9,15 +9,15 @@
     <title>Protocolar App PDF</title>
 
     <!-- Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
 
     <!-- Ícono para pestaña del navegador -->
-    <link rel="icon" href="/icono.jpg" type="image/jpeg">
+    <link rel="icon" href="icono.jpg" type="image/jpeg">
     
     <!-- Compatibilidad con iOS (Safari) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="PDFApp">
-    <link rel="apple-touch-icon" href="/icono.jpg">
+    <meta name="apple-mobile-web-app-title" content="ProtocolarPDF">
+    <link rel="apple-touch-icon" href="icono.jpg">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Source+Code+Pro&family=Inconsolata&family=Ubuntu+Mono&family=Roboto&family=Open+Sans&family=Lato&family=Montserrat&family=Nunito&family=Poppins&family=Fira+Sans&family=Roboto+Condensed&family=Open+Sans+Condensed:wght@300&family=PT+Sans+Narrow&family=Noto+Sans+Condensed&family=Merriweather+Sans:wght@300&family=IBM+Plex+Mono&family=Space+Mono&display=swap" rel="stylesheet">
@@ -1625,7 +1625,7 @@
 
     <script>
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js")
+        navigator.serviceWorker.register("sw.js")
           .then(() => console.log("Service Worker registrado"))
           .catch((err) => console.error("Error al registrar SW:", err));
       }
