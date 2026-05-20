@@ -1,289 +1,982 @@
 <!DOCTYPE html>
 <html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Protocolar App PDF</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icono.jpg" type="image/jpeg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ProtocolarPDF">
+  <link rel="apple-touch-icon" href="icono.jpg">
 
-  <!-- ============================================================
-     HEAD
-     ============================================================ -->
-  <head>
-    <meta charset="UTF-8">
-    <title>Protocolar App PDF</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=JetBrains+Mono&family=Source+Code+Pro&family=Inconsolata&family=Ubuntu+Mono&family=Roboto&family=Open+Sans&family=Lato&family=Montserrat&family=Nunito&family=Poppins&family=Fira+Sans&family=Roboto+Condensed&family=Open+Sans+Condensed:wght@300&family=PT+Sans+Narrow&family=Noto+Sans+Condensed&family=Merriweather+Sans:wght@300&family=IBM+Plex+Mono&family=Space+Mono&display=swap" rel="stylesheet">
 
-    <!-- Manifest -->
-    <link rel="manifest" href="manifest.json">
+  <!-- Libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- Ícono para pestaña del navegador -->
-    <link rel="icon" href="icono.jpg" type="image/jpeg">
-    
-    <!-- Compatibilidad con iOS (Safari) -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="ProtocolarPDF">
-    <link rel="apple-touch-icon" href="icono.jpg">
+  <style>
+    /* ── Design tokens — PDF / Adobe theme ── */
+    :root {
+      --ink:        #1c1c1e;
+      --ink-mid:    #3a3a3c;
+      --ink-light:  #636366;
+      --ink-faint:  #aeaeb2;
+      --paper:      #2c2c2e;
+      --paper-warm: #3a3a3c;
+      --paper-card: #1c1c1e;
+      --red:        #e8392a;
+      --red-light:  #ff5a4a;
+      --red-pale:   rgba(232,57,42,0.12);
+      --accent:     #e8392a;
+      --accent-mid: #c42d1e;
+      --success:    #34c759;
+      --border:     #48484a;
+      --border-soft:#3a3a3c;
+      --surface:    #2c2c2e;
+      --surface-hi: #3a3a3c;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-md:  0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2);
+      --shadow-lg:  0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.25);
+      --r-sm: 4px;
+      --r-md: 8px;
+      --r-lg: 10px;
+    }
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Source+Code+Pro&family=Inconsolata&family=Ubuntu+Mono&family=Roboto&family=Open+Sans&family=Lato&family=Montserrat&family=Nunito&family=Poppins&family=Fira+Sans&family=Roboto+Condensed&family=Open+Sans+Condensed:wght@300&family=PT+Sans+Narrow&family=Noto+Sans+Condensed&family=Merriweather+Sans:wght@300&family=IBM+Plex+Mono&family=Space+Mono&display=swap" rel="stylesheet">
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <!-- Librerías externas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #1c1c1e;
+      color: #e5e5ea;
+      min-height: 100vh;
+    }
 
-    <!-- ============================================================
-       ESTILOS
-       ============================================================ -->
-    <style>
+    /* ── Header ── */
+    .app-header {
+      background: #111111;
+      color: #fff;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
 
-      /* --- Base --- */
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-        background: #f9f9f9;
-      }
+    .app-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-      h1 {
-        text-align: center;
-      }
+    .app-header-seal {
+      width: 26px;
+      height: 26px;
+      background: var(--red);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #fff;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(232,57,42,0.4);
+    }
 
-      label {
-        display: block;
-        margin-top: 10px;
-      }
+    .app-header h1 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #fff;
+    }
 
-      input,
-      select {
-        width: 100%;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        font-size: 14px;
-        color: #333;
-        transition: box-shadow 0.3s ease;
-      }
+    .app-header-sub {
+      font-size: 10px;
+      color: #888;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
 
-      select:hover {
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      }
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background: #333;
+    }
 
-      /* --- Botones --- */
-      button {
-        margin-top: 20px;
-        padding: 10px 20px;
-        background: transparent;
-        color: #333;
-        border: 2px solid #333;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 15px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-      }
+    /* ── Status badge ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #888;
+      font-weight: 500;
+    }
 
-      button:hover {
-        background: rgba(0, 0, 0, 0.05);
-        border-color: #555;
-      }
+    #status {
+      font-size: 12px;
+      font-weight: 500;
+      color: #aaa;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.02em;
+      max-width: 320px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-      /* --- Contenedores --- */
-      .contenedor {
-        max-width: 800px;
-        margin: auto;
-      }
+    /* ── Main layout ── */
+    .app-main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 24px 24px 48px;
+    }
 
-      .config {
-        margin: 20px auto;
-        max-width: 800px;
-        padding: 15px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-      }
+    /* ── Section labels ── */
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, #48484a, transparent);
+    }
 
-      .margen-input {
-        width: 50px;
-      }
+    /* ── Editor container ── */
+    .editor-wrap {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      margin-bottom: 16px;
+      position: relative;
+    }
 
-      /* --- Collapsible --- */
-      .collapsible {
-        background-color: #333;
-        color: white;
-        cursor: pointer;
-        padding: 12px;
-        width: 100%;
-        border: none;
-        text-align: left;
-        outline: none;
-        font-size: 16px;
-        border-radius: 5px;
-      }
+    .editor-header {
+      background: #1a1a1a;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+    }
 
-      .active,
-      .collapsible:hover {
-        background-color: #555;
-      }
+    .editor-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #3a3a3a;
+    }
+    .editor-dot.active { background: var(--red); box-shadow: 0 0 6px rgba(232,57,42,0.5); }
 
-      .contentPlegable {
-        padding: 0 15px;
-        max-height: 0;
-        overflow: hidden;
-        background-color: #f9f9f9;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        margin-top: 10px;
-        transition: max-height 0.4s ease, padding 0.4s ease;
-      }
+    .editor-title-bar {
+      font-size: 11px;
+      color: #666;
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: 6px;
+      letter-spacing: 0.05em;
+    }
 
-      .contentPlegable.show {
-        max-height: 2000px;
-        padding: 15px;
-      }
+    .editorbox {
+      width: 816px;
+      height: 1056px;
+      margin: 20px auto;
+      position: relative;
+      background: #ffffff;
+      border: none;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.4),
+        0 8px 40px rgba(0,0,0,0.6),
+        0 2px 8px rgba(0,0,0,0.4);
+    }
 
-      /* --- Editor / Caja de página --- */
-      .editorbox {
-        width: 816px;
-        height: 1056px;
-        margin: 0 auto;
-        position: relative;
-        background: #fff;
-        border: 1px solid #ccc;
-      }
+    .line-numbers {
+      width: 40px;
+      height: 812px;
+      position: absolute;
+      left: 80px;
+      top: 185px;
+      font-size: 11pt;
+      background: transparent;
+      overflow-y: hidden;
+      box-sizing: border-box;
+      line-height: 33px;
+      color: #bbb;
+      border: 1px solid transparent;
+      padding: 0;
+      padding-right: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      z-index: 1;
+    }
 
-      .line-numbers {
-        width: 40px;
-        height: 812px;
-        position: absolute;
-        left: 80px;
-        top: 185px;
-        font-size: 11pt;
-        background: #fff;
-        overflow-y: hidden;
-        box-sizing: border-box;
-        line-height: 33px;
-        color: #999;
-        border: 1px solid transparent;
-        padding: 0;
-        margin: 0;
-        padding-right: 4px;
-      }
+    .textdeentrada {
+      width: 635px;
+      height: 812px;
+      position: absolute;
+      left: 121px;
+      top: 185px;
+      border: 1px solid transparent;
+      font-size: 11pt;
+      background: transparent;
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      z-index: 1;
+      outline: none;
+      color: #111;
+    }
 
-      .textdeentrada {
-        width: 635px;
-        height: 812px;
-        position: absolute;
-        left: 121px;
-        top: 185px;
-        border: 1px solid #ccc;
-        font-size: 11pt;
-        background: #fff;
-        overflow-y: auto;
-        box-sizing: border-box;
-        padding: 0;
-        margin: 0;
-        transition: border-color 0.3s, box-shadow 0.3s;
-      }
+    .textdeentrada:focus {
+      border-color: rgba(232,57,42,0.25);
+      box-shadow: 0 0 0 3px rgba(232,57,42,0.07);
+      border-radius: 2px;
+    }
 
-      .textdeentrada:focus {
-        outline: none;
-        border-color: #4fc3f7;
-        box-shadow: 0 0 6px rgba(79, 195, 247, 0.8);
-      }
+    /* ── Toolbar ── */
+    .toolbar {
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: var(--r-lg);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+    }
 
-      /* --- Acciones del editor --- */
-      .editor-actions {
-        justify-content: center;
-      }
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
 
-      .editor-actions select {
-        padding: 4px 8px;
-        border: 2px solid #333;
-        border-radius: 6px;
-        background: transparent;
-        color: #333;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        height: auto;
-        line-height: 1.2;
-      }
+    .toolbar-sep {
+      width: 1px;
+      height: 24px;
+      background: #3a3a3a;
+      flex-shrink: 0;
+    }
 
-      .editor-actions select:hover {
-        background: #f0f0f0;
-      }
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--r-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      border: none;
+      white-space: nowrap;
+      position: relative;
+    }
 
-      /* --- ListView (historial) --- */
-      .listview {
-        width: fit-content;
-        min-height: 40px;
-        max-height: 200px;
-        min-width: 200px;
-        max-width: 100%;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background: #fff;
-        margin: 20px 0 20px 20px;
-        overflow-y: auto;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
-      }
+    .btn-primary {
+      background: #3a3a3c;
+      color: #e5e5ea;
+      border: 1px solid #555;
+    }
+    .btn-primary:hover {
+      background: #48484a;
+      border-color: #777;
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0); }
 
-      .listview .item {
-        padding: 10px;
-        font-size: 10pt;
-        text-align: left;
-        cursor: pointer;
-      }
+    .btn-ghost {
+      background: transparent;
+      color: #aeaeb2;
+      border: 1px solid #3a3a3c;
+    }
+    .btn-ghost:hover {
+      background: #2c2c2e;
+      border-color: #555;
+      color: #e5e5ea;
+      transform: translateY(-1px);
+    }
 
-      .listview .item:hover {
-        background-color: #f0f2f5;
-      }
+    .btn-danger {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #5a3030;
+    }
+    .btn-danger:hover {
+      background: rgba(255,107,107,0.08);
+      border-color: #ff6b6b;
+    }
 
-      .item.selected {
-        background-color: #d0ebff;
-      }
+    .btn-start {
+      background: var(--red);
+      color: #fff;
+      padding: 9px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border: none;
+      box-shadow: 0 3px 12px rgba(232,57,42,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .btn-start:hover {
+      background: var(--red-light);
+      box-shadow: 0 5px 20px rgba(232,57,42,0.5);
+      transform: translateY(-2px);
+    }
+    .btn-start:active { transform: translateY(0); }
 
-      /* --- Etiquetas y cajas pequeñas --- */
-      .etiquetas {
-        margin-top: 10px;
-        font-weight: bold;
-        color: #333;
-      }
+    /* number input beside detect button */
+    .num-input {
+      width: 52px;
+      padding: 6px 8px;
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-sm);
+      background: #1c1c1e;
+      font-size: 13px;
+      color: #e5e5ea;
+      font-family: 'JetBrains Mono', monospace;
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .num-input:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(232,57,42,0.15);
+    }
 
-      .small-box {
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        padding: 8px;
-        margin-top: 10px;
-        background-color: #fff;
-        max-width: 300px;
-        display: none;
-      }
+    .styled-select {
+      padding: 6px 12px;
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-sm);
+      background: #1c1c1e;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: #e5e5ea;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+    }
+    .styled-select:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(232,57,42,0.15);
+    }
+    .styled-select:hover { border-color: #555; }
+    .styled-select option { background: #1c1c1e; color: #e5e5ea; }
 
-      /* --- Emoji --- */
-      img.emoji {
-        height: 1em;
-        width: 1em;
-        margin: 0 4px;
-        vertical-align: middle;
-      }
+    /* ── Panel / collapsible ── */
+    .panel {
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
 
-    </style>
-  </head>
+    .panel-toggle {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 13px 18px;
+      text-align: left;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #e5e5ea;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .panel-toggle:hover { background: #2c2c2e; }
 
-  <!-- ============================================================
-     BODY
-     ============================================================ -->
-  <body>
+    .panel-toggle .toggle-icon {
+      margin-left: auto;
+      font-size: 11px;
+      color: #666;
+      transition: transform 0.3s;
+    }
+    .panel-toggle.active .toggle-icon { transform: rotate(180deg); }
 
-    <!-- ── Editor principal ─────────────────────────────────────── -->
-    <div class="contenedor">
-      <h1>Protocolar PDF</h1>
+    .panel-toggle .panel-badge {
+      font-size: 10px;
+      background: rgba(232,57,42,0.12);
+      color: var(--red-light);
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(232,57,42,0.2);
+    }
+
+    .contentPlegable {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+      padding: 0 20px;
+    }
+    .contentPlegable.show {
+      max-height: 3000px;
+      padding: 20px;
+    }
+
+    /* ── Config grid ── */
+    .config-section {
+      margin-bottom: 20px;
+    }
+
+    .config-section-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #333;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #888;
+      letter-spacing: 0.02em;
+    }
+
+    .form-input {
+      padding: 7px 10px;
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-sm);
+      background: #1c1c1e;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #e5e5ea;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(232,57,42,0.12);
+    }
+
+    .form-input-wide {
+      padding: 7px 10px;
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-sm);
+      background: #1c1c1e;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: #e5e5ea;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .form-input-wide:focus { outline: none; border-color: var(--red); }
+    .form-input-wide::placeholder, .form-input::placeholder { color: #555; }
+
+    /* ── Toggle / checkbox ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #1c1c1e;
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-sm);
+    }
+    .toggle-row label {
+      font-size: 13px;
+      color: #aeaeb2;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-row input[type=checkbox] {
+      accent-color: var(--red);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    /* ── Font row ── */
+    .font-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .font-row .styled-select { flex: 1; min-width: 180px; }
+
+    /* ── Small boxes ── */
+    .small-box {
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-md);
+      padding: 12px;
+      background: #1c1c1e;
+      display: none;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      margin-top: 12px;
+    }
+
+    .etiquetas {
+      font-size: 10px;
+      font-weight: 600;
+      color: #888;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      width: 100%;
+      margin-bottom: 2px;
+    }
+
+    /* ── History panel ── */
+    .history-section {
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: var(--r-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .history-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .history-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #e5e5ea;
+      letter-spacing: 0.02em;
+    }
+
+    .listview {
+      border: 1px solid #3a3a3c;
+      border-radius: var(--r-md);
+      background: #1c1c1e;
+      min-height: 44px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .listview .item {
+      padding: 9px 14px;
+      font-size: 11px;
+      color: #aeaeb2;
+      font-family: 'JetBrains Mono', monospace;
+      border-bottom: 1px solid #2c2c2e;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .listview .item:last-child { border-bottom: none; }
+    .listview .item:hover { background: rgba(232,57,42,0.08); color: #e5e5ea; }
+    .listview .item::before {
+      content: '↩';
+      font-size: 10px;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .item.selected { background: rgba(232,57,42,0.1); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1c1c1e; }
+    ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    /* ── Collapsible sub ── */
+    #idMostarMenuConf {
+      border-top: 1px solid #333;
+      margin: 0 -20px;
+      padding: 0 20px;
+    }
+
+    /* ── Settings row ── */
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #1c1c1e;
+      border: 1px solid #333;
+      border-radius: var(--r-md);
+    }
+    .settings-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #888;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      min-width: 120px;
+    }
+
+    /* ── Emoji images ── */
+    img.emoji { height: 1em; width: 1em; margin: 0 3px; vertical-align: middle; }
+
+    /* ── Separator ── */
+    .panel-separator {
+      height: 1px;
+      background: #333;
+      margin: 12px 0;
+    }
+
+    /* ══════════════════════════════════════════
+       TEMA CLARO — Word + PDF
+    ══════════════════════════════════════════ */
+    body.theme-light {
+      background: #f0f0f0;
+      color: #1a1a1a;
+    }
+
+    body.theme-light .app-header {
+      background: #2b579a;        /* Azul Word */
+      border-bottom: 1px solid #1e4080;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    body.theme-light .app-header h1 { color: #fff; }
+    body.theme-light .app-header-sub { color: rgba(255,255,255,0.65); }
+    body.theme-light .header-divider { background: rgba(255,255,255,0.2); }
+    body.theme-light .status-bar span:first-child { color: rgba(255,255,255,0.5) !important; }
+    body.theme-light #status { color: rgba(255,255,255,0.85); }
+
+    body.theme-light .app-header-seal {
+      background: var(--red);
+      box-shadow: 0 2px 6px rgba(232,57,42,0.4);
+    }
+
+    body.theme-light .section-label { color: #c0392b; }
+    body.theme-light .section-label::after {
+      background: linear-gradient(90deg, #c8c8c8, transparent);
+    }
+
+    body.theme-light .editor-wrap {
+      background: #e8e8e8;
+      border: 1px solid #c8c8c8;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    body.theme-light .editor-header {
+      background: #2b579a;
+      border-bottom: 1px solid #1e4080;
+    }
+    body.theme-light .editor-dot { background: rgba(255,255,255,0.2); }
+    body.theme-light .editor-dot.active {
+      background: #e8392a;
+      box-shadow: 0 0 5px rgba(232,57,42,0.4);
+    }
+    body.theme-light .editor-title-bar { color: rgba(255,255,255,0.55); }
+
+    body.theme-light .editorbox {
+      background: #ffffff;
+      box-shadow: 0 0 0 1px #d0d0d0, 0 6px 30px rgba(0,0,0,0.12);
+    }
+    body.theme-light .line-numbers { color: #b0b8c8; }
+    body.theme-light .textdeentrada { color: #1a1a1a; }
+    body.theme-light .textdeentrada:focus {
+      border-color: rgba(43,87,154,0.3);
+      box-shadow: 0 0 0 3px rgba(43,87,154,0.08);
+    }
+
+    body.theme-light .toolbar {
+      background: #ffffff;
+      border: 1px solid #d0d0d0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    body.theme-light .toolbar-sep { background: #d8d8d8; }
+
+    body.theme-light .btn-primary {
+      background: #2b579a;
+      color: #fff;
+      border-color: #1e4080;
+    }
+    body.theme-light .btn-primary:hover { background: #1e4080; }
+
+    body.theme-light .btn-ghost {
+      background: transparent;
+      color: #444;
+      border-color: #c8c8c8;
+    }
+    body.theme-light .btn-ghost:hover {
+      background: #f0f0f0;
+      border-color: #aaa;
+      color: #1a1a1a;
+    }
+
+    body.theme-light .btn-danger {
+      color: #b92020;
+      border-color: #e0b0b0;
+    }
+    body.theme-light .btn-danger:hover { background: #fff0f0; border-color: #c05050; }
+
+    body.theme-light .btn-start {
+      background: var(--red);
+      box-shadow: 0 3px 12px rgba(232,57,42,0.35);
+    }
+    body.theme-light .btn-start:hover {
+      background: var(--red-light);
+      box-shadow: 0 5px 18px rgba(232,57,42,0.45);
+    }
+
+    body.theme-light .num-input {
+      background: #fff;
+      border-color: #c8c8c8;
+      color: #1a1a1a;
+    }
+    body.theme-light .num-input:focus {
+      border-color: #2b579a;
+      box-shadow: 0 0 0 3px rgba(43,87,154,0.12);
+    }
+
+    body.theme-light .styled-select {
+      background-color: #fff;
+      border-color: #c8c8c8;
+      color: #1a1a1a;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+    body.theme-light .styled-select:focus {
+      border-color: #2b579a;
+      box-shadow: 0 0 0 3px rgba(43,87,154,0.12);
+    }
+    body.theme-light .styled-select:hover { border-color: #999; }
+    body.theme-light .styled-select option { background: #fff; color: #1a1a1a; }
+
+    body.theme-light .panel {
+      background: #ffffff;
+      border-color: #d0d0d0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    body.theme-light .panel-toggle { color: #1a1a1a; }
+    body.theme-light .panel-toggle:hover { background: #f5f5f5; }
+    body.theme-light .panel-toggle .toggle-icon { color: #999; }
+    body.theme-light .panel-toggle .panel-badge {
+      background: rgba(232,57,42,0.08);
+      color: #c0392b;
+      border-color: rgba(232,57,42,0.18);
+    }
+
+    body.theme-light .contentPlegable { background: transparent; }
+    body.theme-light #idMostarMenuConf { border-top-color: #e0e0e0; }
+
+    body.theme-light .config-section-title {
+      color: #666;
+      border-bottom-color: #e8e8e8;
+    }
+    body.theme-light .form-label { color: #666; }
+    body.theme-light .form-input {
+      background: #fafafa;
+      border-color: #d0d0d0;
+      color: #1a1a1a;
+    }
+    body.theme-light .form-input:focus {
+      border-color: #2b579a;
+      box-shadow: 0 0 0 3px rgba(43,87,154,0.10);
+    }
+    body.theme-light .form-input-wide {
+      background: #fafafa;
+      border-color: #d0d0d0;
+      color: #1a1a1a;
+    }
+    body.theme-light .form-input-wide:focus { border-color: #2b579a; }
+    body.theme-light .form-input::placeholder,
+    body.theme-light .form-input-wide::placeholder { color: #bbb; }
+
+    body.theme-light .toggle-row {
+      background: #f5f5f5;
+      border-color: #e0e0e0;
+    }
+    body.theme-light .toggle-row label { color: #444; }
+    body.theme-light .toggle-row input[type=checkbox] { accent-color: #2b579a; }
+
+    body.theme-light .small-box {
+      background: #f5f5f5;
+      border-color: #d8d8d8;
+    }
+    body.theme-light .etiquetas { color: #777; }
+
+    body.theme-light .history-section {
+      background: #ffffff;
+      border-color: #d0d0d0;
+    }
+    body.theme-light .history-title { color: #1a1a1a; }
+    body.theme-light .listview {
+      background: #fafafa;
+      border-color: #e0e0e0;
+    }
+    body.theme-light .listview .item {
+      color: #555;
+      border-bottom-color: #ececec;
+    }
+    body.theme-light .listview .item:hover { background: rgba(43,87,154,0.06); color: #1a1a1a; }
+    body.theme-light .listview .item::before { color: #bbb; }
+
+    body.theme-light .settings-row {
+      background: #f5f5f5;
+      border-color: #e0e0e0;
+    }
+    body.theme-light .settings-label { color: #777; }
+    body.theme-light .panel-separator { background: #e8e8e8; }
+    body.theme-light .models-row {
+      background: #f5f5f5;
+      border-color: #e0e0e0;
+    }
+    body.theme-light #fuenteEtiqueta { color: #c0392b !important; }
+    body.theme-light #ajustesEtiqueta { color: #666 !important; }
+
+    body.theme-light ::-webkit-scrollbar-track { background: #f0f0f0; }
+    body.theme-light ::-webkit-scrollbar-thumb { background: #c8c8c8; }
+    body.theme-light ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+    body.theme-light .panel > div[style*="padding"] { border-top-color: #e8e8e8; }
+
+    /* ── Theme toggle button ── */
+    .btn-theme {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      line-height: 1;
+      padding: 0;
+      color: #fff;
+    }
+    .btn-theme:hover {
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.3);
+      transform: scale(1.05);
+    }
+    body.theme-light .btn-theme {
+      border-color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.12);
+    }
+    body.theme-light .btn-theme:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .editor-wrap, .toolbar, .panel, .history-section {
+      animation: fadeSlideIn 0.35s ease both;
+    }
+    .toolbar        { animation-delay: 0.05s; }
+    .panel          { animation-delay: 0.10s; }
+    .history-section { animation-delay: 0.15s; }
+
+    /* Sub-config models box */
+    .models-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px;
+      background: #1c1c1e;
+      border: 1px solid #333;
+      border-radius: var(--r-md);
+    }
+
+    /* panel inner padded area */
+    .panel > div[style*="padding"] {
+      border-top: 1px solid #333;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Header ── -->
+  <header class="app-header">
+    <div class="app-header-brand">
+      <div class="app-header-seal">P</div>
+      <div>
+        <h1>Protocolar PDF</h1>
+        <div class="app-header-sub">Sistema de Documentación</div>
+      </div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="status-bar">
+      <span style="font-size:10px; color:#666;">ESTADO</span>
+      <span id="status">Iniciando…</span>
+      <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+    </div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main class="app-main">
+
+    <!-- Editor -->
+    <div class="section-label">Área de edición</div>
+
+    <div class="editor-wrap">
+      <div class="editor-header">
+        <div class="editor-dot active"></div>
+        <div class="editor-dot"></div>
+        <div class="editor-dot"></div>
+        <span class="editor-title-bar">documento.txt — Carta (216 × 279 mm)</span>
+      </div>
 
       <div class="editorbox">
-        <div id="linenumbers"
-             class="line-numbers">
-        </div>
-
+        <div id="linenumbers" class="line-numbers"></div>
         <div id="editor"
              class="textdeentrada"
              contenteditable="true"
@@ -291,1345 +984,860 @@
              lang="es">
         </div>
       </div>
+    </div>
 
-      <!-- ── Barra de acciones ──────────────────────────────────── -->
-      <div class="editor-actions">
-        <button onclick="Cleantext()">✨ Limpiar</button>
-        <button onclick="Pegarportapapeles()">📃 Pegar</button>
-        <input type="number" id="renglonInicial" value="1" min="1" max="24" style="width:30px; margin-left:10px;">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="btn btn-ghost" onclick="Cleantext()">✨ Limpiar</button>
+        <button class="btn btn-primary" onclick="Pegarportapapeles()">📃 Pegar</button>
+      </div>
 
-        <button id="btnActualizar" onclick="actualizarLineaDeInicion()">🔄Detectar Inicio</button>
+      <div class="toolbar-sep"></div>
 
-        <select id="comenzarFrente" style="width:100px; padding: 10px;" onchange="cambiarladopagina(this.value)">
+      <div class="toolbar-group">
+        <input type="number" id="renglonInicial" value="1" min="1" max="24" class="num-input">
+        <button class="btn btn-ghost" id="btnActualizar" onclick="actualizarLineaDeInicion()">🔄 Detectar inicio</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-group">
+        <select id="comenzarFrente" class="styled-select" onchange="cambiarladopagina(this.value)">
           <option value="1" selected>Frente</option>
           <option value="2">Vuelto</option>
         </select>
-
-        <button onclick="Start()">Start</button>
-        <button onclick="MostarMenuPrincipal()">📝Menu</button>
       </div>
 
-      <!-- ── Menú principal (plegable) ─────────────────────────── -->
-      <div id="classMenuPrincipal" class="contentPlegable">
-        <div class="config">
+      <div class="toolbar-sep"></div>
 
-          <!-- Configuración de documento (plegable) -->
-          <button onclick="MostarMenuConf()" type="button" class="collapsible">⚙️ Configuración de documento</button>
-
-          <div id="idMostarMenuConf" class="contentPlegable">
-
-            <!-- Márgenes -->
-            <h3>Configuración de Márgenes</h3>
-
-            <p><b>Frente (páginas impares)</b></p>
-            <label>Superior   (mm): <input type="number" id="frenteSup"        class="margen-input"></label>
-            <label>Izquierdo  (mm): <input type="number" id="frenteIzq"        class="margen-input"></label>
-            <label>CampoUtilY (mm): <input type="number" id="frenteCampoUtilY" class="margen-input"></label>
-            <label>CampoUtilX (mm): <input type="number" id="frenteCampoUtilX" class="margen-input"></label>
-
-            <p><b>Vuelo (páginas pares)</b></p>
-            <label>Superior   (mm): <input type="number" id="vueloSup"         class="margen-input"></label>
-            <label>Izquierdo  (mm): <input type="number" id="vueloIzq"         class="margen-input"></label>
-            <label>CampoUtilY (mm): <input type="number" id="vueloCampoUtilY"  class="margen-input"></label>
-            <label>CampoUtilX (mm): <input type="number" id="vueloCampoUtilX"  class="margen-input"></label>
-
-            <!-- Interlineado -->
-            <h3>Interlineado</h3>
-            <div style="display:flex; align-items:center; gap:15px;">
-              <label style="margin:0; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" id="interlineadoAuto" checked>
-                Automático
-              </label>
-              <label style="margin:0; display:flex; align-items:center; gap:5px;">
-                Manual (mm):
-                <input type="number" id="interlineadoManual" value="8.75" style="width:80px;">
-              </label>
-            </div>
-
-            <!-- Formato de texto -->
-            <h3>Formato de texto</h3>
-            <div style="display:flex; align-items:center; gap:15px;">
-              <label style="margin:0; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" id="justificarTexto" checked>
-                Justificar texto
-              </label>
-            </div>
-
-            <!-- Nombre de configuración -->
-            <label>Nombre de configuración:
-              <input type="text" id="nombreAjustes" placeholder="Conf1" style="width:200px;">
-            </label>
-
-            <button onclick="guardarAjustes()">💾 Guardar Ajustes</button>
-            <button onclick="restablecerMargenes()">🔄 Reiniciar Márgenes</button>
-            <button onclick="borrarAjustes()">🗑️ Borrar todos los ajustes</button>
-
-          </div><!-- /idMostarMenuConf -->
-
-          <!-- Ajuste cargado + lista -->
-          <div id="ajustesEtiqueta" class="etiquetas">Márgenes Cargados:</div>
-          <select id="listaAjustes" style="width:200px;" onchange="cargarAjuste(this.value)"></select>
-
-          <!-- Selector de fuente -->
-          <div id="fuenteEtiqueta" class="etiquetas">Fuente en uso</div>
-
-          <select id="fuente" style="width:250px;" onchange="aplicarFuente(this.value)">
-            <!-- Sans-serif -->
-            <option value="Arial" selected>Arial</option>
-            <option value="Helvetica">Helvetica</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Tahoma">Tahoma</option>
-            <option value="Trebuchet MS">Trebuchet MS</option>
-            <!-- Serif -->
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Book Antiqua">Book Antiqua</option>
-            <option value="Garamond">Garamond</option>
-            <!-- Monoespaciadas -->
-            <option value="Courier New">Courier New</option>
-            <option value="Courier">Courier</option>
-            <option value="Consolas">Consolas</option>
-            <option value="Lucida Console">Lucida Console</option>
-          </select>
-
-          <select id="fuenteModerna" style="width:250px;" onchange="aplicarFuente(this.value)">
-            <option value="0" selected>Estilos Modernos</option>
-            <option value="JetBrains Mono">JetBrains Mono</option>
-            <option value="Source Code Pro">Source Code Pro</option>
-            <option value="Inconsolata">Inconsolata</option>
-            <option value="Ubuntu Mono">Ubuntu Mono</option>
-            <option value="Roboto">Roboto</option>
-            <option value="Open Sans">Open Sans</option>
-            <option value="Lato">Lato</option>
-            <option value="Montserrat">Montserrat</option>
-            <option value="Nunito">Nunito</option>
-            <option value="Poppins">Poppins</option>
-            <option value="Fira Sans">Fira Sans</option>
-          </select>
-
-          <select id="fuenteCompacta" style="width:250px;" onchange="aplicarFuente(this.value)">
-            <option value="0" selected>Estilos Compactos</option>
-            <option value="Arial Narrow">Arial Narrow</option>
-            <option value="Roboto Condensed">Roboto Condensed</option>
-            <option value="Open Sans Condensed">Open Sans Condensed</option>
-            <option value="PT Sans Narrow">PT Sans Narrow</option>
-            <option value="Noto Sans Condensed">Noto Sans Condensed</option>
-            <option value="Times New Roman Narrow">Times New Roman Narrow</option>
-            <option value="Merriweather Sans Condensed">Merriweather Sans Condensed</option>
-            <option value="IBM Plex Mono">IBM Plex Mono</option>
-            <option value="Space Mono">Space Mono</option>
-          </select>
-
-          <!-- Tamaño de fuente -->
-          <div id="e03Etiqueta" class="etiquetas">
-            <label for="tamanoFuente">
-              Tamaño de fuente:
-              <input type="number" id="tamanoFuente" value="11" style="width:50px; margin-left:10px;">
-            </label>
-          </div>
-
-          <br>
-
-          <!-- Prefijo del archivo -->
-          <input type="text" id="prefijoArchivo"
-                 placeholder="Nombre del documento opcional"
-                 style="width:200px;">
-
-          <!-- ── Sub-configuración de modelos ───────────────────── -->
-          <div class="config">
-
-            <select id="modeloversion" style="width:250px;" onchange="mostrarEntradasBoxs(this.value)">
-              <option value="1">Enmendados Interlineados</option>
-              <option value="2" selected>Imagen→PDF</option>
-              <option value="3">Generar Enumeración</option>
-              <option value="4">Escritura a Mano</option>
-              <option value="5">Enmendados V2 (canvas)</option>
-            </select>
-
-            <select id="accionPDF" style="width:250px;">
-              <option value="1" selected>Abrir en nueva ventana</option>
-              <option value="2">Descargar PDF</option>
-            </select>
-
-            <!-- Box: Enmendados (modelos 1 y 5) -->
-            <div id="boxEnmendados" class="small-box">
-              <div id="e01Etiqueta" class="etiquetas">top mm - y Estilo de letra</div>
-              <input type="number" id="entradaEnmendados" value="3" style="width:100px; margin-left:10px;">
-              <select id="selectorEstiloEnmendados" style="width:150px;">
-                <option value="normal" selected>Normal</option>
-                <option value="bold">Negrita</option>
-                <option value="italic">Cursiva</option>
-              </select>
-            </div>
-
-          </div><!-- /config sub-modelos -->
-
-          <!-- Box: Generar Enumeración (modelo 3) -->
-          <div id="boxGenerarEnnumeracion" class="small-box">
-            <div id="gEnnumeracionIetiqueta" class="etiquetas">Numero De Folios</div>
-            <input type="number" id="gNumeracionI" value="1"   style="width:80px; margin-left:10px;">
-            <input type="number" id="gNumeracionE" value="100" style="width:80px; margin-left:10px;">
-
-            <div id="gXandYtiqueta01" class="etiquetas">Y.    and.    X mm</div>
-            <input type="number" id="gNumeracionY" value="5"   style="width:80px; margin-left:10px;">
-            <input type="number" id="gNumeracionX" value="160" style="width:80px; margin-left:10px;">
-
-            <div id="gtamanoFuentetiqueta" class="etiquetas">Tamaño de Letra</div>
-            <input type="number" id="gEnnuneracionTamanoFuente" value="8" style="width:80px; margin-left:10px;">
-          </div>
-
-          <!-- Box: Escritura a Mano (modelo 4) -->
-          <div id="boxEscrituraAmano" class="small-box">
-            <div id="escrituraamanotag" class="etiquetas">Escritura a Mano, Indicar ( X.   and.    Y ) en mm sin interlineado</div>
-            <div id="gXandYtiqueta" class="etiquetas">X    and    Y</div>
-            <input type="number" id="EscrituraAmanoX"    value="32" style="width:80px; margin-left:10px;">
-            <input type="number" id="EscrituraAmanoY"    value="49" style="width:80px; margin-left:10px;">
-            <input type="text"   id="EscrituraAmanoText"            style="width:200px; margin-left:10px;">
-          </div>
-
-        </div><!-- /config principal -->
-      </div><!-- /classMenuPrincipal -->
-
-    </div><!-- /contenedor -->
-
-    <!-- ── Historial ────────────────────────────────────────────── -->
-    <div class="config">
-      <button onclick="ListarCopiasHTML()">Historial 📃</button>
-      <button onclick="BorrarHistorialCopias()">✨ Borrar Historial</button>
-
-      <div id="lvlistaCopiasHTML" class="listview"></div>
-
-      <div id="status" style="margin-top:10px; font-weight:bold; color:green;"></div>
+      <div class="toolbar-group" style="gap:8px;">
+        <button class="btn btn-start" onclick="Start()">▶ Generar PDF</button>
+        <button class="btn btn-ghost" onclick="MostarMenuPrincipal()">⚙️ Configurar</button>
+      </div>
     </div>
 
-    <!-- ============================================================
-       SCRIPTS EXTERNOS
-       ============================================================ -->
-    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
-    <script>
-      twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
-    </script>
+    <!-- Main menu (collapsible) -->
+    <div id="classMenuPrincipal" class="contentPlegable" style="padding:0; overflow:visible;">
+      <div class="panel">
+        <!-- Config header -->
+        <button type="button" class="panel-toggle" onclick="MostarMenuConf(); this.classList.toggle('active')">
+          <span>⚙️</span>
+          <span>Configuración de Documento</span>
+          <span class="panel-badge">Márgenes · Fuente · Formato</span>
+          <span class="toggle-icon">▼</span>
+        </button>
 
-    <!-- ============================================================
-       SCRIPT PRINCIPAL
-       ============================================================ -->
-    <script>
+        <div id="idMostarMenuConf" class="contentPlegable">
 
-      /* ─────────────────────────────────────────────────────────────
-       CONSTANTES Y CONFIGURACIÓN GLOBAL
-       ───────────────────────────────────────────────────────────── */
+          <!-- Margins -->
+          <div class="config-section" style="margin-top:16px;">
+            <div class="config-section-title">Frente — páginas impares</div>
+            <div class="config-grid">
+              <div class="form-field">
+                <label class="form-label">Superior (mm)</label>
+                <input type="number" id="frenteSup" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Izquierdo (mm)</label>
+                <input type="number" id="frenteIzq" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil Y (mm)</label>
+                <input type="number" id="frenteCampoUtilY" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil X (mm)</label>
+                <input type="number" id="frenteCampoUtilX" class="form-input">
+              </div>
+            </div>
+          </div>
 
-      const margenesDefault = {
-        frente: { sup: 48, izq: 31, UtilY: 210, UtilX: 168 },
-        vuelo:  { sup: 32, izq: 16, UtilY: 210, UtilX: 168 }
-      };
+          <div class="config-section">
+            <div class="config-section-title">Vuelto — páginas pares</div>
+            <div class="config-grid">
+              <div class="form-field">
+                <label class="form-label">Superior (mm)</label>
+                <input type="number" id="vueloSup" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Izquierdo (mm)</label>
+                <input type="number" id="vueloIzq" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil Y (mm)</label>
+                <input type="number" id="vueloCampoUtilY" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil X (mm)</label>
+                <input type="number" id="vueloCampoUtilX" class="form-input">
+              </div>
+            </div>
+          </div>
 
-      const tamanoPagina = {
-        letter: { x: 216, y: 279, l: 24 }
-      };
+          <div class="config-section">
+            <div class="config-section-title">Interlineado y formato</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div class="toggle-row" style="flex:1; min-width:200px;">
+                <label>
+                  <input type="checkbox" id="interlineadoAuto" checked>
+                  Interlineado automático
+                </label>
+              </div>
+              <div class="form-field" style="width:180px;">
+                <label class="form-label">Manual (mm)</label>
+                <input type="number" id="interlineadoManual" value="8.75" class="form-input">
+              </div>
+              <div class="toggle-row" style="flex:1; min-width:200px;">
+                <label>
+                  <input type="checkbox" id="justificarTexto" checked>
+                  Justificar texto
+                </label>
+              </div>
+            </div>
+          </div>
 
-      const keyProtocolarPDF = 'keyProtocolarPDFv2';
-      const keyCopiasHTML    = 'CopiasHTMLv2';
+          <div class="config-section">
+            <div class="config-section-title">Guardar configuración</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+              <div class="form-field" style="flex:1; min-width:180px;">
+                <label class="form-label">Nombre del ajuste</label>
+                <input type="text" id="nombreAjustes" placeholder="Conf1" class="form-input-wide">
+              </div>
+              <button class="btn btn-primary" onclick="guardarAjustes()">💾 Guardar</button>
+              <button class="btn btn-ghost" onclick="restablecerMargenes()">🔄 Reiniciar</button>
+              <button class="btn btn-danger" onclick="borrarAjustes()">🗑️ Borrar todo</button>
+            </div>
+          </div>
 
-      let pdfGlobal;
-      let pdfGlobalEnmendado;
+        </div><!-- /idMostarMenuConf -->
 
+        <div style="padding: 16px 20px; border-top: 1px solid var(--border-soft);">
 
-      /* ─────────────────────────────────────────────────────────────
-       UI — MENÚS Y PANELES
-       ───────────────────────────────────────────────────────────── */
+          <div class="settings-row">
+            <span class="settings-label">Ajuste activo</span>
+            <select id="listaAjustes" class="styled-select" style="flex:1; max-width:220px;" onchange="cargarAjuste(this.value)"></select>
+            <span id="ajustesEtiqueta" style="font-size:12px; color:#888;">Márgenes Cargados:</span>
+          </div>
 
-      function MostarMenuConf() {
-        document.getElementById("idMostarMenuConf").classList.toggle("show");
+          <div class="panel-separator"></div>
+          <div class="config-section-title" style="margin-bottom:8px;">Tipografía</div>
+
+          <div class="font-row">
+            <select id="fuente" class="styled-select" onchange="aplicarFuente(this.value)">
+              <option value="Arial" selected>Arial</option>
+              <option value="Helvetica">Helvetica</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="Trebuchet MS">Trebuchet MS</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Book Antiqua">Book Antiqua</option>
+              <option value="Garamond">Garamond</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Courier">Courier</option>
+              <option value="Consolas">Consolas</option>
+              <option value="Lucida Console">Lucida Console</option>
+            </select>
+
+            <select id="fuenteModerna" class="styled-select" onchange="aplicarFuente(this.value)">
+              <option value="0" selected>Estilos Modernos</option>
+              <option value="JetBrains Mono">JetBrains Mono</option>
+              <option value="Source Code Pro">Source Code Pro</option>
+              <option value="Inconsolata">Inconsolata</option>
+              <option value="Ubuntu Mono">Ubuntu Mono</option>
+              <option value="Roboto">Roboto</option>
+              <option value="Open Sans">Open Sans</option>
+              <option value="Lato">Lato</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Nunito">Nunito</option>
+              <option value="Poppins">Poppins</option>
+              <option value="Fira Sans">Fira Sans</option>
+            </select>
+
+            <select id="fuenteCompacta" class="styled-select" onchange="aplicarFuente(this.value)">
+              <option value="0" selected>Estilos Compactos</option>
+              <option value="Arial Narrow">Arial Narrow</option>
+              <option value="Roboto Condensed">Roboto Condensed</option>
+              <option value="Open Sans Condensed">Open Sans Condensed</option>
+              <option value="PT Sans Narrow">PT Sans Narrow</option>
+              <option value="Noto Sans Condensed">Noto Sans Condensed</option>
+              <option value="Times New Roman Narrow">Times New Roman Narrow</option>
+              <option value="Merriweather Sans Condensed">Merriweather Sans Condensed</option>
+              <option value="IBM Plex Mono">IBM Plex Mono</option>
+              <option value="Space Mono">Space Mono</option>
+            </select>
+          </div>
+
+          <div id="fuenteEtiqueta" style="font-size:11px; color:var(--red-light); margin-top:6px; font-weight:500;">Fuente en uso: Arial</div>
+
+          <div class="panel-separator"></div>
+
+          <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+            <div class="form-field">
+              <label class="form-label">Tamaño de fuente (pt)</label>
+              <input type="number" id="tamanoFuente" value="11" class="form-input" style="width:80px;">
+            </div>
+            <div class="form-field" style="flex:1; min-width:200px;">
+              <label class="form-label">Prefijo del documento</label>
+              <input type="text" id="prefijoArchivo" placeholder="Nombre del documento (opcional)" class="form-input-wide">
+            </div>
+          </div>
+
+          <div class="panel-separator"></div>
+
+          <!-- Models & PDF action -->
+          <div class="models-row">
+            <div class="form-field" style="min-width:220px;">
+              <label class="form-label">Modelo</label>
+              <select id="modeloversion" class="styled-select" onchange="mostrarEntradasBoxs(this.value)">
+                <option value="1">Enmendados Interlineados</option>
+                <option value="2" selected>Imagen → PDF</option>
+                <option value="3">Generar Enumeración</option>
+                <option value="4">Escritura a Mano</option>
+                <option value="5">Enmendados V2 (canvas)</option>
+              </select>
+            </div>
+            <div class="form-field" style="min-width:200px;">
+              <label class="form-label">Acción PDF</label>
+              <select id="accionPDF" class="styled-select">
+                <option value="1" selected>Abrir en nueva ventana</option>
+                <option value="2">Descargar PDF</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Box: Enmendados -->
+          <div id="boxEnmendados" class="small-box">
+            <div class="etiquetas">Top (mm) · Estilo de letra</div>
+            <input type="number" id="entradaEnmendados" value="3" class="form-input" style="width:90px;">
+            <select id="selectorEstiloEnmendados" class="styled-select" style="width:150px;">
+              <option value="normal" selected>Normal</option>
+              <option value="bold">Negrita</option>
+              <option value="italic">Cursiva</option>
+            </select>
+          </div>
+
+          <!-- Box: Enumeración -->
+          <div id="boxGenerarEnnumeracion" class="small-box">
+            <div class="etiquetas">Rango de folios</div>
+            <input type="number" id="gNumeracionI" value="1"   class="form-input" style="width:80px;" placeholder="Desde">
+            <input type="number" id="gNumeracionE" value="100" class="form-input" style="width:80px;" placeholder="Hasta">
+            <div class="etiquetas" style="margin-top:8px;">Posición Y / X (mm)</div>
+            <input type="number" id="gNumeracionY" value="5"   class="form-input" style="width:80px;">
+            <input type="number" id="gNumeracionX" value="160" class="form-input" style="width:80px;">
+            <div class="etiquetas" style="margin-top:8px;">Tamaño de letra (pt)</div>
+            <input type="number" id="gEnnuneracionTamanoFuente" value="8" class="form-input" style="width:80px;">
+          </div>
+
+          <!-- Box: Escritura a mano -->
+          <div id="boxEscrituraAmano" class="small-box">
+            <div class="etiquetas">Posición X / Y (mm)</div>
+            <input type="number" id="EscrituraAmanoX"    value="32" class="form-input" style="width:80px;">
+            <input type="number" id="EscrituraAmanoY"    value="49" class="form-input" style="width:80px;">
+            <input type="text"   id="EscrituraAmanoText"            class="form-input-wide" style="width:240px;" placeholder="Texto a escribir…">
+          </div>
+
+        </div><!-- /panel body -->
+      </div><!-- /panel -->
+    </div><!-- /classMenuPrincipal -->
+
+    <!-- History -->
+    <div class="section-label" style="margin-top: 8px;">Historial de copias</div>
+    <div class="history-section">
+      <div class="history-toolbar">
+        <span class="history-title">Historial</span>
+        <button class="btn btn-ghost" onclick="ListarCopiasHTML()" style="margin-left:auto;">📃 Actualizar</button>
+        <button class="btn btn-danger" onclick="BorrarHistorialCopias()">✨ Borrar historial</button>
+      </div>
+      <div id="lvlistaCopiasHTML" class="listview"></div>
+    </div>
+
+  </main>
+
+  <!-- Twemoji -->
+  <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+  <script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
+
+  <!-- ── Main script (logic unchanged) ── -->
+  <script>
+    const margenesDefault = {
+      frente: { sup: 48, izq: 31, UtilY: 210, UtilX: 168 },
+      vuelo:  { sup: 32, izq: 16, UtilY: 210, UtilX: 168 }
+    };
+    const tamanoPagina = { letter: { x: 216, y: 279, l: 24 } };
+    const keyProtocolarPDF = 'keyProtocolarPDFv2';
+    const keyCopiasHTML    = 'CopiasHTMLv2';
+    let pdfGlobal, pdfGlobalEnmendado;
+
+    function MostarMenuConf() {
+      document.getElementById("idMostarMenuConf").classList.toggle("show");
+    }
+    function MostarMenuPrincipal() {
+      document.getElementById("classMenuPrincipal").classList.toggle("show");
+    }
+    function mostrarEntradasBoxs(value) {
+      const bE = document.getElementById("boxEnmendados");
+      const bN = document.getElementById("boxGenerarEnnumeracion");
+      const bM = document.getElementById("boxEscrituraAmano");
+      bE.style.display = (value === "1" || value === "5") ? "flex" : "none";
+      bN.style.display = (value === "3") ? "flex" : "none";
+      bM.style.display = (value === "4") ? "flex" : "none";
+    }
+    function actualizarStatus(msg) {
+      document.getElementById("status").innerText = msg;
+    }
+
+    function generarNumerosCadena() {
+      const n = document.getElementById("linenumbers");
+      if (!n) return;
+      let s = "";
+      for (let i = 1; i <= 24; i++) s += i + "<br>";
+      n.innerHTML = s;
+    }
+
+    function cambiarladopagina(value) {
+      const editor  = document.querySelector(".textdeentrada");
+      const numeros = document.querySelector(".line-numbers");
+      if (!editor || !numeros) return;
+      let sup, izq, utilY, utilX;
+      if (value === "1") {
+        sup   = parseFloat(document.getElementById("frenteSup").value)        || margenesDefault.frente.sup;
+        izq   = parseFloat(document.getElementById("frenteIzq").value)        || margenesDefault.frente.izq;
+        utilY = parseFloat(document.getElementById("frenteCampoUtilY").value) || margenesDefault.frente.UtilY;
+        utilX = parseFloat(document.getElementById("frenteCampoUtilX").value) || margenesDefault.frente.UtilX;
+      } else {
+        sup   = parseFloat(document.getElementById("vueloSup").value)         || margenesDefault.vuelo.sup;
+        izq   = parseFloat(document.getElementById("vueloIzq").value)         || margenesDefault.vuelo.izq;
+        utilY = parseFloat(document.getElementById("vueloCampoUtilY").value)  || margenesDefault.vuelo.UtilY;
+        utilX = parseFloat(document.getElementById("vueloCampoUtilX").value)  || margenesDefault.vuelo.UtilX;
       }
+      const mmpx = 3.76;
+      const supPx = sup * mmpx, izqPx = izq * mmpx;
+      const utilYPx = utilY * mmpx, utilXPx = utilX * mmpx;
+      const lineHeightPx = utilYPx / tamanoPagina.letter.l;
+      editor.style.top        = supPx + "px";
+      editor.style.left       = izqPx + "px";
+      editor.style.height     = utilYPx + "px";
+      editor.style.width      = utilXPx + "px";
+      editor.style.lineHeight = lineHeightPx + "px";
+      numeros.style.top        = supPx + "px";
+      numeros.style.left       = izqPx - 20 + "px";
+      numeros.style.height     = utilYPx + "px";
+      numeros.style.width      = utilXPx + "px";
+      numeros.style.lineHeight = lineHeightPx + "px";
+      numeros.style.fontFamily = editor.style.fontFamily || "Arial";
+      numeros.style.fontSize   = editor.style.fontSize   || "11pt";
+      generarNumerosCadena();
+    }
 
-      function MostarMenuPrincipal() {
-        document.getElementById("classMenuPrincipal").classList.toggle("show");
-      }
+    function getPaginaLado() {
+      return document.getElementById("comenzarFrente").value;
+    }
 
-      function mostrarEntradasBoxs(value) {
-        // boxEnmendados visible para modelo 1 (V1 texto) y modelo 5 (V2 canvas)
-        document.getElementById("boxEnmendados").style.display          = (value === "1" || value === "5") ? "inline-block" : "none";
-        document.getElementById("boxGenerarEnnumeracion").style.display = (value === "3") ? "inline-block" : "none";
-        document.getElementById("boxEscrituraAmano").style.display      = (value === "4") ? "inline-block" : "none";
-      }
+    function Cleantext() {
+      GuardarCopiaHTML();
+      document.getElementById("editor").innerHTML = "";
+      actualizarStatus('Editor limpio ✅');
+    }
 
-      function actualizarStatus(mensaje) {
-        document.getElementById("status").innerText = mensaje;
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       UI — EDITOR
-       ───────────────────────────────────────────────────────────── */
-
-      function generarNumerosCadena() {
-        const numeros = document.getElementById("linenumbers");
-        if (!numeros) return;
-
-        let cadena = "";
-        for (let i = 1; i <= 24; i++) {
-          cadena += i + "<br>";
-        }
-        numeros.innerHTML = cadena;
-      }
-
-      function cambiarladopagina(value) {
-        const editor  = document.querySelector(".textdeentrada");
-        const numeros = document.querySelector(".line-numbers");
-        if (!editor || !numeros) return;
-
-        let sup, izq, utilY, utilX;
-        if (value === "1") {
-          sup   = parseFloat(document.getElementById("frenteSup").value)        || margenesDefault.frente.sup;
-          izq   = parseFloat(document.getElementById("frenteIzq").value)        || margenesDefault.frente.izq;
-          utilY = parseFloat(document.getElementById("frenteCampoUtilY").value) || margenesDefault.frente.UtilY;
-          utilX = parseFloat(document.getElementById("frenteCampoUtilX").value) || margenesDefault.frente.UtilX;
-        } else {
-          sup   = parseFloat(document.getElementById("vueloSup").value)         || margenesDefault.vuelo.sup;
-          izq   = parseFloat(document.getElementById("vueloIzq").value)         || margenesDefault.vuelo.izq;
-          utilY = parseFloat(document.getElementById("vueloCampoUtilY").value)  || margenesDefault.vuelo.UtilY;
-          utilX = parseFloat(document.getElementById("vueloCampoUtilX").value)  || margenesDefault.vuelo.UtilX;
-        }
-
-        const mmpx    = 3.76;
-        const supPx   = sup   * mmpx;
-        const izqPx   = izq   * mmpx;
-        const utilYPx = utilY * mmpx;
-        const utilXPx = utilX * mmpx;
-
-        const lineHeightPx = utilYPx / tamanoPagina.letter.l;
-
-        editor.style.top        = supPx + "px";
-        editor.style.left       = izqPx + "px";
-        editor.style.height     = utilYPx + "px";
-        editor.style.width      = utilXPx + "px";
-        editor.style.lineHeight = lineHeightPx + "px";
-
-        numeros.style.top        = supPx + "px";
-        numeros.style.left       = izqPx - 20 + "px";
-        numeros.style.height     = utilYPx + "px";
-        numeros.style.width      = utilXPx + "px";
-        numeros.style.lineHeight = lineHeightPx + "px";
-
-        numeros.style.fontFamily = editor.style.fontFamily || "Arial";
-        numeros.style.fontSize   = editor.style.fontSize   || "11pt";
-
-        generarNumerosCadena();
-      }
-
-      function getPaginaLado() {
-        return document.getElementById("comenzarFrente").value;
-      }
-
-      function Cleantext() {
-        GuardarCopiaHTML();
-        document.getElementById("editor").innerHTML = "";
-        actualizarStatus('Editor limpio✅');
-      }
-
-
-
-      async function Pegarportapapeles() {
-        try {
-          const clipboardItems = await navigator.clipboard.read();
-          const editor = document.getElementById("editor");
-          let pegado = false;
-
-          for (const item of clipboardItems) {
-            if (item.types.includes("text/html")) {
-              const blob = await item.getType("text/html");
-              const html = await blob.text();
-
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(html, "text/html");
-
-              // Flag: indica si ya limpiamos el primer texto real
-              let primerTextoLimpiado = false;
-
-              function limpiarNodo(nodo, isBoldHeredado, isItalicHeredado) {
-                if (nodo.nodeType === Node.TEXT_NODE) {
-                  if (!nodo.textContent) return null;
-
-                  let contenido = nodo.textContent;
-
-                  // ── NUEVO: limpiar espacios/nbsp al inicio del PRIMER texto real ──
-                  if (!primerTextoLimpiado && contenido.trim().length > 0) {
-                    contenido = contenido.replace(/^[\s\u00a0\t]+/, "");
-                    primerTextoLimpiado = true;
-                  }
-
-                  if (!contenido) return null;
-
-                  let el = document.createTextNode(contenido);
-                  if (isBoldHeredado && isItalicHeredado) {
-                    const b = document.createElement("b");
-                    const i = document.createElement("i");
-                    i.appendChild(el); b.appendChild(i); return b;
-                  }
-                  if (isBoldHeredado)   { const b = document.createElement("b"); b.appendChild(el); return b; }
-                  if (isItalicHeredado) { const i = document.createElement("i"); i.appendChild(el); return i; }
-                  return el;
+    async function Pegarportapapeles() {
+      try {
+        const clipboardItems = await navigator.clipboard.read();
+        const editor = document.getElementById("editor");
+        let pegado = false;
+        for (const item of clipboardItems) {
+          if (item.types.includes("text/html")) {
+            const blob = await item.getType("text/html");
+            const html = await blob.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            let primerTextoLimpiado = false;
+            function limpiarNodo(nodo, isBoldHeredado, isItalicHeredado) {
+              if (nodo.nodeType === Node.TEXT_NODE) {
+                if (!nodo.textContent) return null;
+                let contenido = nodo.textContent;
+                if (!primerTextoLimpiado && contenido.trim().length > 0) {
+                  contenido = contenido.replace(/^[\s\u00a0\t]+/, "");
+                  primerTextoLimpiado = true;
                 }
-
-                if (nodo.nodeType !== Node.ELEMENT_NODE) return null;
-
-                const tag   = nodo.tagName.toLowerCase();
-                const style = (nodo.getAttribute("style") || "").toLowerCase().replace(/\s/g, "");
-
-                const bold   = isBoldHeredado   || tag === "b" || tag === "strong" || style.includes("font-weight:bold") || style.includes("font-weight:700");
-                const italic = isItalicHeredado || tag === "i" || tag === "em"     || style.includes("font-style:italic");
-
-                if (tag === "br") return document.createElement("br");
-
-                const contenedor = document.createElement("span");
-                nodo.childNodes.forEach(hijo => {
-                  const limpio = limpiarNodo(hijo, bold, italic);
-                  if (limpio) contenedor.appendChild(limpio);
-                });
-
-                if (tag === "p" || tag === "div") {
-                  contenedor.appendChild(document.createElement("br"));
+                if (!contenido) return null;
+                let el = document.createTextNode(contenido);
+                if (isBoldHeredado && isItalicHeredado) {
+                  const b = document.createElement("b"); const i = document.createElement("i");
+                  i.appendChild(el); b.appendChild(i); return b;
                 }
-
-                return contenedor;
+                if (isBoldHeredado)   { const b = document.createElement("b"); b.appendChild(el); return b; }
+                if (isItalicHeredado) { const i = document.createElement("i"); i.appendChild(el); return i; }
+                return el;
               }
-
-              const fragmento = document.createDocumentFragment();
-              doc.body.childNodes.forEach(nodo => {
-                const limpio = limpiarNodo(nodo, false, false);
-                if (limpio) fragmento.appendChild(limpio);
-              });
-
-              // Limpiar editor si solo tiene nodos vacíos antes de insertar
-              const todoVacio = [...editor.childNodes].every(n =>
-                                                             n.nodeName === "BR" ||
-                                                             (n.nodeType === Node.TEXT_NODE && n.textContent.trim() === "") ||
-                                                             (n.nodeType === Node.ELEMENT_NODE && n.textContent.trim() === "")
-                                                            );
-              if (todoVacio) editor.innerHTML = "";
-
-              editor.appendChild(fragmento);
-              pegado = true;
-              break;
+              if (nodo.nodeType !== Node.ELEMENT_NODE) return null;
+              const tag   = nodo.tagName.toLowerCase();
+              const style = (nodo.getAttribute("style") || "").toLowerCase().replace(/\s/g, "");
+              const bold   = isBoldHeredado   || tag === "b" || tag === "strong" || style.includes("font-weight:bold") || style.includes("font-weight:700");
+              const italic = isItalicHeredado || tag === "i" || tag === "em"     || style.includes("font-style:italic");
+              if (tag === "br") return document.createElement("br");
+              const contenedor = document.createElement("span");
+              nodo.childNodes.forEach(hijo => { const l = limpiarNodo(hijo, bold, italic); if (l) contenedor.appendChild(l); });
+              if (tag === "p" || tag === "div") contenedor.appendChild(document.createElement("br"));
+              return contenedor;
             }
+            const fragmento = document.createDocumentFragment();
+            doc.body.childNodes.forEach(nodo => { const l = limpiarNodo(nodo, false, false); if (l) fragmento.appendChild(l); });
+            const todoVacio = [...editor.childNodes].every(n =>
+              n.nodeName === "BR" ||
+              (n.nodeType === Node.TEXT_NODE && n.textContent.trim() === "") ||
+              (n.nodeType === Node.ELEMENT_NODE && n.textContent.trim() === "")
+            );
+            if (todoVacio) editor.innerHTML = "";
+            editor.appendChild(fragmento);
+            pegado = true;
+            break;
           }
-
-          if (!pegado) {
-            const textoPlano = await navigator.clipboard.readText();
-            // Limpiar espacios al inicio del texto plano también
-            editor.innerText += textoPlano.replace(/^[\s\u00a0\t]+/, "");
-          }
-
-          actualizarStatus("📃 Texto pegado (limpio)");
-        } catch (err) {
-          alert("⚠️ No se pudo acceder al portapapeles: " + err);
         }
+        if (!pegado) {
+          const textoPlano = await navigator.clipboard.readText();
+          editor.innerText += textoPlano.replace(/^[\s\u00a0\t]+/, "");
+        }
+        actualizarStatus("📃 Texto pegado (limpio)");
+      } catch (err) {
+        alert("⚠️ No se pudo acceder al portapapeles: " + err);
       }
+    }
 
+    function aplicarFuente(value) {
+      if (value === "0") return;
+      document.getElementById("editor").style.fontFamily      = value;
+      document.getElementById("linenumbers").style.fontFamily = value;
+      document.getElementById("fuenteEtiqueta").innerText     = 'Fuente en uso: ' + value;
+    }
+    function getFuenteConfig() {
+      const editor = document.getElementById("editor");
+      return { fuente: editor.style.fontFamily || "Arial", tamanoFuente: parseInt(document.getElementById("tamanoFuente").value, 10) || 11 };
+    }
 
-      /* ─────────────────────────────────────────────────────────────
-       UI — FUENTE
-       ───────────────────────────────────────────────────────────── */
-
-      function aplicarFuente(value) {
-        if (value === "0") return;
-        document.getElementById("editor").style.fontFamily      = value;
-        document.getElementById("linenumbers").style.fontFamily = value;
-        document.getElementById("fuenteEtiqueta").innerText     = 'Fuente aplicada: ' + value;
-      }
-
-      function getFuenteConfig() {
-        const editor = document.getElementById("editor");
-        return {
-          fuente:       editor.style.fontFamily || "Arial",
-          tamanoFuente: parseInt(document.getElementById("tamanoFuente").value, 10) || 11
+    function aplicarValoresDefault() {
+      document.getElementById("frenteSup").value        = margenesDefault.frente.sup;
+      document.getElementById("frenteIzq").value        = margenesDefault.frente.izq;
+      document.getElementById("frenteCampoUtilY").value = margenesDefault.frente.UtilY;
+      document.getElementById("frenteCampoUtilX").value = margenesDefault.frente.UtilX;
+      document.getElementById("vueloSup").value         = margenesDefault.vuelo.sup;
+      document.getElementById("vueloIzq").value         = margenesDefault.vuelo.izq;
+      document.getElementById("vueloCampoUtilY").value  = margenesDefault.vuelo.UtilY;
+      document.getElementById("vueloCampoUtilX").value  = margenesDefault.vuelo.UtilX;
+    }
+    function restablecerMargenes() {
+      aplicarValoresDefault();
+      document.getElementById("interlineadoManual").value = "8.75";
+      alert("🔄 Márgenes restablecidos a los valores por defecto");
+    }
+    function guardarAjustes() {
+      try {
+        const nombreInput = document.getElementById("nombreAjustes").value.trim();
+        const nombre = nombreInput || "Conf1";
+        const ajustes = {
+          nombre,
+          frenteSup: document.getElementById("frenteSup").value,
+          frenteIzq: document.getElementById("frenteIzq").value,
+          frenteCampoUtilY: document.getElementById("frenteCampoUtilY").value,
+          frenteCampoUtilX: document.getElementById("frenteCampoUtilX").value,
+          vueloSup: document.getElementById("vueloSup").value,
+          vueloIzq: document.getElementById("vueloIzq").value,
+          vueloCampoUtilY: document.getElementById("vueloCampoUtilY").value,
+          vueloCampoUtilX: document.getElementById("vueloCampoUtilX").value,
+          tamanoFuente: document.getElementById("tamanoFuente").value,
+          fuente: document.getElementById("fuente").value,
+          interlineadoAuto: document.getElementById("interlineadoAuto").checked,
+          interlineadoManual: document.getElementById("interlineadoManual").value
         };
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       AJUSTES — GUARDAR / CARGAR / BORRAR
-       ───────────────────────────────────────────────────────────── */
-
-      function aplicarValoresDefault() {
-        document.getElementById("frenteSup").value        = margenesDefault.frente.sup;
-        document.getElementById("frenteIzq").value        = margenesDefault.frente.izq;
-        document.getElementById("frenteCampoUtilY").value = margenesDefault.frente.UtilY;
-        document.getElementById("frenteCampoUtilX").value = margenesDefault.frente.UtilX;
-        document.getElementById("vueloSup").value         = margenesDefault.vuelo.sup;
-        document.getElementById("vueloIzq").value         = margenesDefault.vuelo.izq;
-        document.getElementById("vueloCampoUtilY").value  = margenesDefault.vuelo.UtilY;
-        document.getElementById("vueloCampoUtilX").value  = margenesDefault.vuelo.UtilX;
-      }
-
-      function restablecerMargenes() {
-        aplicarValoresDefault();
-        document.getElementById("interlineadoManual").value = "8.75";
-        alert("🔄 Márgenes restablecidos a los valores por defecto");
-      }
-
-      function guardarAjustes() {
-        try {
-          const nombreInput = document.getElementById("nombreAjustes").value.trim();
-          const nombre      = nombreInput || "Conf1";
-
-          const ajustes = {
-            nombre,
-            frenteSup:          document.getElementById("frenteSup").value,
-            frenteIzq:          document.getElementById("frenteIzq").value,
-            frenteCampoUtilY:   document.getElementById("frenteCampoUtilY").value,
-            frenteCampoUtilX:   document.getElementById("frenteCampoUtilX").value,
-            vueloSup:           document.getElementById("vueloSup").value,
-            vueloIzq:           document.getElementById("vueloIzq").value,
-            vueloCampoUtilY:    document.getElementById("vueloCampoUtilY").value,
-            vueloCampoUtilX:    document.getElementById("vueloCampoUtilX").value,
-            tamanoFuente:       document.getElementById("tamanoFuente").value,
-            fuente:             document.getElementById("fuente").value,
-            interlineadoAuto:   document.getElementById("interlineadoAuto").checked,
-            interlineadoManual: document.getElementById("interlineadoManual").value
-          };
-
-          let lista = [];
-          try {
-            const stored = localStorage.getItem(keyProtocolarPDF);
-            lista = stored ? JSON.parse(stored) : [];
-            if (!Array.isArray(lista)) lista = [];
-          } catch (e) {
-            console.warn("Lista corrupta, se reinicia.", e);
-            lista = [];
-          }
-
-          const index = lista.findIndex(a => a.nombre === ajustes.nombre);
-          if (index >= 0) {
-            lista[index] = ajustes;
-          } else {
-            lista.push(ajustes);
-          }
-
-          localStorage.setItem(keyProtocolarPDF, JSON.stringify(lista));
-          document.getElementById("ajustesEtiqueta").innerText = "Ajuste en uso: " + ajustes.nombre;
-
-          actualizarListbox();
-
-          const nuevoIndex = lista.findIndex(a => a.nombre === ajustes.nombre);
-          const select     = document.getElementById("listaAjustes");
-          if (select && nuevoIndex >= 0) select.value = nuevoIndex;
-
-        } catch (err) {
-          console.error("Error al guardar ajustes:", err);
-        }
-      }
-
-      function cargarAjuste(index) {
-        const lista  = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
-        const ajuste = lista[index];
-        if (!ajuste) return;
-
-        document.getElementById("frenteSup").value           = ajuste.frenteSup;
-        document.getElementById("frenteIzq").value           = ajuste.frenteIzq;
-        document.getElementById("frenteCampoUtilY").value    = ajuste.frenteCampoUtilY;
-        document.getElementById("frenteCampoUtilX").value    = ajuste.frenteCampoUtilX;
-        document.getElementById("vueloSup").value            = ajuste.vueloSup;
-        document.getElementById("vueloIzq").value            = ajuste.vueloIzq;
-        document.getElementById("vueloCampoUtilY").value     = ajuste.vueloCampoUtilY;
-        document.getElementById("vueloCampoUtilX").value     = ajuste.vueloCampoUtilX;
-        document.getElementById("tamanoFuente").value        = ajuste.tamanoFuente;
-        document.getElementById("fuente").value              = ajuste.fuente;
-        document.getElementById("interlineadoAuto").checked  = ajuste.interlineadoAuto;
-        document.getElementById("interlineadoManual").value  = ajuste.interlineadoManual;
-
-        document.getElementById("ajustesEtiqueta").innerText = "Márgenes cargados: " + ajuste.nombre;
-        document.getElementById("nombreAjustes").value       = ajuste.nombre;
-
-        const select = document.getElementById("listaAjustes");
-        if (select) select.value = index;
-        return ajuste.nombre;
-      }
-
-      function actualizarListbox() {
-        const lista  = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
-        const select = document.getElementById("listaAjustes");
-        select.innerHTML = "";
-
-        lista.forEach((ajuste, i) => {
-          const option       = document.createElement("option");
-          option.value       = i;
-          option.textContent = ajuste.nombre;
-          select.appendChild(option);
-        });
-      }
-
-      function borrarAjustes() {
-        localStorage.removeItem(keyProtocolarPDF);
-        const select = document.getElementById("listaAjustes");
-        if (select) select.innerHTML = "";
-        document.getElementById("ajustesEtiqueta").innerText = "Ningún ajuste cargado";
-        alert("⚠️ Todos los ajustes han sido eliminados");
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       HISTORIAL DE COPIAS HTML
-       ───────────────────────────────────────────────────────────── */
-
-      function GuardarCopiaHTML() {
-        const contenidoHTML  = document.getElementById("editor").innerHTML;
-        let copias           = JSON.parse(localStorage.getItem(keyCopiasHTML)) || [];
-
-        const editorTexto    = document.getElementById("editor").innerText || "";
-        const textoLimpio    = editorTexto.replace(/\s+/g, " ").trim();
-        const prefijoArchivo = textoLimpio.substring(0, 150);
-
-        const copia = {
-          fecha:   new Date().toLocaleString(),
-          prefijo: prefijoArchivo,
-          html:    contenidoHTML
-        };
-
-        copias.push(copia);
-
-        try {
-          localStorage.setItem(keyCopiasHTML, JSON.stringify(copias));
-        } catch (e) {
-          alert("⚠️ localStorage lleno. Historial🗑️.");
-          return;
-        }
-      }
-
-      function ListarCopiasHTML() {
-        const lista      = JSON.parse(localStorage.getItem(keyCopiasHTML)) || [];
-        const contenedor = document.getElementById("lvlistaCopiasHTML");
-        contenedor.innerHTML = "";
-
-        if (lista.length === 0) {
-          contenedor.innerHTML = "<p>No hay copias guardadas.</p>";
-          return;
-        }
-
-        lista.forEach((copia, index) => {
-          const item = document.createElement("div");
-          item.style.cursor       = "pointer";
-          item.style.padding      = "5px";
-          item.style.borderBottom = "1px solid #ddd";
-          item.textContent        = `# ${index + 1} - ${copia.fecha} - ${copia.prefijo}`;
-
-          item.addEventListener("click", () => {
-            document.getElementById("editor").innerHTML = copia.html;
-          });
-
-          contenedor.appendChild(item);
-        });
-      }
-
-      function BorrarHistorialCopias() {
-        localStorage.removeItem(keyCopiasHTML);
-        document.getElementById("lvlistaCopiasHTML").innerHTML = "<p>Historial borrado.</p>";
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       PDF — UTILIDADES GENERALES
-       ───────────────────────────────────────────────────────────── */
-
-      function generarNombreArchivo() {
-        const nombreConfig = document.getElementById("nombreAjustes").value.trim();
-        const prefijo      = document.getElementById("prefijoArchivo").value.trim();
-
-        const ahora  = new Date();
-        const year   = ahora.getFullYear();
-        const month  = String(ahora.getMonth() + 1).padStart(2, '0');
-        const day    = String(ahora.getDate()).padStart(2, '0');
-        const hour   = String(ahora.getHours()).padStart(2, '0');
-        const minute = String(ahora.getMinutes()).padStart(2, '0');
-
-        let nombreArchivo = "";
-        if (nombreConfig) nombreArchivo += nombreConfig;
-        if (prefijo)      nombreArchivo += (nombreArchivo ? "-" : "") + prefijo;
-        nombreArchivo += (nombreArchivo ? "-" : "") + `${year}-${month}-${day}-${hour}-${minute}.pdf`;
-
-        return nombreArchivo;
-      }
-
-      async function ejecutarPDF(pdfEnmemoria) {
-        if (!pdfEnmemoria) { alert("⚠️ El PDF aún no ha sido creado en memoria."); return; }
-        const blob    = pdfEnmemoria.output("blob");
-        const blobUrl = URL.createObjectURL(blob);
-        const link    = document.createElement("a");
-        link.href     = blobUrl;
-        link.target   = "_blank";
-        link.rel      = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      async function descargarPDF(pdfEnmemoria) {
-        if (!pdfEnmemoria) { alert("⚠️ El PDF aún no ha sido creado en memoria."); return; }
-        pdfEnmemoria.save("v2-" + generarNombreArchivo());
-      }
-
-      async function impresora(doc) {
-        const pdfBlobUrl  = doc.output("bloburl");
-        const printWindow = window.open(pdfBlobUrl);
-        if (printWindow) {
-          printWindow.addEventListener("load", () => { printWindow.print(); });
-        }
-      }
-
-      function crearDocumento() {
-        const { jsPDF } = window.jspdf;
-        return new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: [tamanoPagina.letter.x, tamanoPagina.letter.y]
-        });
-      }
-
-      function configurarFuente(doc) {
-        const estilo       = document.getElementById("selectorEstiloEnmendados").value;
-        const configFuente = getFuenteConfig();
-        doc.setFont(configFuente.fuente, estilo);
-        doc.setFontSize(configFuente.tamanoFuente);
-      }
-
-      /**
-       * Devuelve los márgenes según paridad de página.
-       * Si valorEnmendado > 0 se resta al margen superior (modo enmendado).
-       * No depende del selector de modelo activo.
-       */
-      function obtenerMargenes(pagina, valorEnmendado = 0) {
-        let margenes;
-        if (pagina % 2 !== 0) {
-          margenes = {
-            sup:   parseFloat(document.getElementById("frenteSup").value),
-            izq:   parseFloat(document.getElementById("frenteIzq").value),
-            UtilY: parseFloat(document.getElementById("frenteCampoUtilY").value),
-            UtilX: parseFloat(document.getElementById("frenteCampoUtilX").value)
-          };
-        } else {
-          margenes = {
-            sup:   parseFloat(document.getElementById("vueloSup").value),
-            izq:   parseFloat(document.getElementById("vueloIzq").value),
-            UtilY: parseFloat(document.getElementById("vueloCampoUtilY").value),
-            UtilX: parseFloat(document.getElementById("vueloCampoUtilX").value)
-          };
-        }
-
-        // Reducción de margen superior para enmendados (modelo 1 texto y modelo 5 canvas)
-        if (valorEnmendado > 0) {
-          margenes.sup -= valorEnmendado;
-        }
-
-        return margenes;
-      }
-
-      function calcularLineHeight(altoUtil, maxLineasPorPagina) {
-        const usarAuto = document.getElementById("interlineadoAuto").checked;
-        if (usarAuto) {
-          return altoUtil / maxLineasPorPagina;
-        } else {
-          return parseFloat(document.getElementById("interlineadoManual").value);
-        }
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       START — PUNTO DE ENTRADA PRINCIPAL
-       ───────────────────────────────────────────────────────────── */
-
-      async function Start() {
-        const seleccion = document.getElementById("modeloversion").value;
-        const accionPDF = document.getElementById("accionPDF").value;
-
-        let pdfResultado = null;
-
-        if      (seleccion === "2") { pdfResultado = await guardarPDFv2(0);                    pdfGlobal          = pdfResultado; }
-        else if (seleccion === "1") { pdfResultado = await guardarPDFEnmendado();              pdfGlobalEnmendado = pdfResultado; }
-        else if (seleccion === "3") { pdfResultado = enumeracionDeFolios();                    pdfGlobal          = pdfResultado; }
-        else if (seleccion === "4") { pdfResultado = EscrituraAmano();                         pdfGlobal          = pdfResultado; }
-        else if (seleccion === "5") {
-          const valorEnmendado = parseFloat(document.getElementById("entradaEnmendados").value) || 0;
-          pdfResultado = await guardarPDFv2(valorEnmendado);
-          pdfGlobalEnmendado = pdfResultado;
-        }
-
-        if (!pdfResultado) return;
-
-        if      (accionPDF === "1") ejecutarPDF(pdfResultado);
-        else if (accionPDF === "2") descargarPDF(pdfResultado);
-
-        if (seleccion === "1" || seleccion === "2" || seleccion === "5") {
-          GuardarCopiaHTML();
-          actualizarStatus("✅" + document.getElementById("ajustesEtiqueta").innerText);
-        } else {
-          actualizarStatus("✅ PDF generado");
-        }
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       MÓDULO 1 — ENMENDADOS INTERLINEADOS (texto directo, sin canvas)
-       ───────────────────────────────────────────────────────────── */
-
-      function obtenerTextoEditorV1() {
-        const editor = document.getElementById("editor");
-        let texto    = editor.innerText;
-        texto        = texto.replace(/\r\n/g, "\n");
-        let lineas   = texto.split("\n");
-
-        while (lineas.length > 0 && lineas[0].trim() === "") {
-          lineas.shift();
-        }
-
-        const primeraLinea = lineas.length > 0 ? lineas[0] : "";
-        const resto        = lineas.slice(1).join(" ");
-        return primeraLinea + (resto ? " " + resto : "");
-      }
-
-      function calcularRenglonInicialV1() {
-        const editor = document.getElementById("editor");
-
-        // Buscar el primer nodo de texto con contenido real
-        function buscarPrimerNodoTexto(nodo) {
-          if (nodo.nodeType === Node.TEXT_NODE && nodo.textContent.trim().length > 0) {
-            return nodo;
-          }
-          for (const hijo of nodo.childNodes) {
-            const resultado = buscarPrimerNodoTexto(hijo);
-            if (resultado) return resultado;
-          }
-          return null;
-        }
-
-        const primerNodo = buscarPrimerNodoTexto(editor);
-        if (!primerNodo) return 1;
-
-        // Obtener la posición Y del primer carácter real
-        const range = document.createRange();
-        range.setStart(primerNodo, 0);
-        range.setEnd(primerNodo, 1);
-        const rectTexto = range.getBoundingClientRect();
-
-        // Obtener la posición Y del borde superior del editor
-        const rectEditor = editor.getBoundingClientRect();
-
-        // Calcular el line-height actual del editor en píxeles
-        const lineHeightPx = parseFloat(window.getComputedStyle(editor).lineHeight);
-
-        // Calcular renglón
-        const distanciaY = rectTexto.top - rectEditor.top;
-        const renglon = Math.round(distanciaY / lineHeightPx) + 1;
-
-        return Math.max(1, renglon);
-      }
-
-      function actualizarLineaDeInicion() {
-        const renglonInicial = document.getElementById("renglonInicial");
-        if (renglonInicial) {
-          const nuevoValor = calcularRenglonInicialV1();
-          renglonInicial.value = nuevoValor;
-          actualizarStatus("📃Renglón de Inicio: " + nuevoValor);
-        }
-      }
-
-      function justificarLineaPDF(doc, texto, xInicial, y, anchoUtil, esUltimaLinea) {
-        const palabras = texto.split(" ");
-
-        if (palabras.length <= 1 || esUltimaLinea) {
-          doc.text(texto, xInicial, y);
-          return;
-        }
-
-        const anchoLinea   = doc.getTextWidth(texto);
-        const espacioExtra = (anchoUtil - anchoLinea) / (palabras.length - 1);
-        let x = xInicial;
-
-        palabras.forEach((p, idx) => {
-          doc.text(p, x, y);
-          if (idx < palabras.length - 1) {
-            x += doc.getTextWidth(p + " ") + espacioExtra;
-          }
-        });
-      }
-
-      function dibujarLineas(doc, lineas, paginaInicial, renglonInicial, maxLineasPorPagina,valorEnmendado) {
-        let pagina             = paginaInicial;
-        let y;
-        let lineasDisponibles  = maxLineasPorPagina;
-        let lineasUsadas       = 0;
-        let renglonesAplicados = false;
-
-        lineas.forEach((ln, i) => {
-          const margenes   = obtenerMargenes(pagina, valorEnmendado); 
-          const anchoUtil  = margenes.UtilX;
-          const altoUtil   = margenes.UtilY;
-          const lineHeight = calcularLineHeight(altoUtil, maxLineasPorPagina);
-
-          if (lineasUsadas === 0) {
-            if (!renglonesAplicados) {
-              y                  = margenes.sup + (renglonInicial - 1) * lineHeight;
-              lineasDisponibles  = maxLineasPorPagina - (renglonInicial - 1);
-              renglonesAplicados = true;
-            } else {
-              y                 = margenes.sup;
-              lineasDisponibles = maxLineasPorPagina;
-            }
-          }
-
-          const justificar             = document.getElementById("justificarTexto").checked;
-          const esUltimaLineaDocumento = i === lineas.length - 1;
-
-          if (justificar) {
-            justificarLineaPDF(doc, ln, margenes.izq, y, anchoUtil, esUltimaLineaDocumento);
-          } else {
-            doc.text(ln, margenes.izq, y);
-          }
-
-          y += lineHeight;
-          lineasUsadas++;
-
-          if (lineasUsadas >= lineasDisponibles && i !== lineas.length - 1) {
-            doc.addPage();
-            pagina++;
-            lineasUsadas      = 0;
-            lineasDisponibles = maxLineasPorPagina;
-          }
-        });
-      }
-
-      async function guardarPDFEnmendado() {
-        // Lee el valor de enmendado y lo pasa a obtenerMargenes via dibujarLineas
-
-        const comenzarFrente  = document.getElementById("comenzarFrente").value;
-        let paginaInicial     = (comenzarFrente === "1") ? 1 : 2;
-        const valorEnmendado  = parseFloat(document.getElementById("entradaEnmendados").value) || 0;
-
-        const doc        = crearDocumento();
-        const texto      = obtenerTextoEditorV1();
-        configurarFuente(doc);
-
-        const anchoUtil      = parseFloat(document.getElementById("frenteCampoUtilX").value);
-        const renglonInicial = parseInt(document.getElementById("renglonInicial").value);
-        const maxLineas      = tamanoPagina.letter.l;
-        const lineas         = doc.splitTextToSize(texto, anchoUtil);
-
-
-        dibujarLineas(doc, lineas, paginaInicial, renglonInicial, maxLineas, valorEnmendado);
-
-
-        return doc;
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       MÓDULO 3 — GENERAR ENUMERACIÓN DE FOLIOS
-       ───────────────────────────────────────────────────────────── */
-
-      function numeroALetras(num) {
-        const unidades   = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-        const especiales = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
-        const decenas    = ["", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-        const centenas   = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
-
-        if (num === 0)    return "CERO";
-        if (num === 100)  return "CIEN";
-        if (num === 1000) return "MIL";
-        if (num < 10)     return unidades[num];
-        if (num < 20)     return especiales[num - 10];
-        if (num < 100) {
-          if (num === 20) return "VEINTE";
-          if (num > 20 && num < 30) return "VEINTI" + unidades[num % 10];
-          return decenas[Math.floor(num / 10)] + (num % 10 !== 0 ? " Y " + unidades[num % 10] : "");
-        }
-        if (num < 1000) {
-          return centenas[Math.floor(num / 100)] + (num % 100 !== 0 ? " " + numeroALetras(num % 100) : "");
-        }
-        return num.toString();
-      }
-
-      function enumeracionDeFolios() {
-        const inicio = parseInt(document.getElementById("gNumeracionI").value, 10);
-        const fin    = parseInt(document.getElementById("gNumeracionE").value, 10);
-        const X      = parseInt(document.getElementById("gNumeracionX").value, 10);
-        const Y      = parseInt(document.getElementById("gNumeracionY").value, 10);
-
-        if (isNaN(inicio) || isNaN(fin) || inicio > fin) {
-          alert("⚠️ Verificar que los valores sean válidos");
-          return null;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: [tamanoPagina.letter.x, tamanoPagina.letter.y]
-        });
-
-        const fuente = document.getElementById("fuente").value;
-        const tamano = parseInt(document.getElementById("gEnnuneracionTamanoFuente").value);
-        doc.setFont(fuente, "normal");
-        doc.setFontSize(tamano);
-
-        for (let i = inicio; i <= fin; i++) {
-          doc.text(numeroALetras(i), X, Y);
-          if (i < fin) doc.addPage();
-        }
-
-        return doc;
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       MÓDULO 4 — ESCRITURA A MANO
-       ───────────────────────────────────────────────────────────── */
-
-      function EscrituraAmano() {
-        const X    = parseInt(document.getElementById("EscrituraAmanoX").value, 10);
-        const Y    = parseInt(document.getElementById("EscrituraAmanoY").value, 10);
-        const text = document.getElementById("EscrituraAmanoText").value;
-
-        if (isNaN(X) || isNaN(Y)) return null;
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: [tamanoPagina.letter.x, tamanoPagina.letter.y]
-        });
-
-        const fuente = document.getElementById("fuente").value;
-        const tamano = parseInt(document.getElementById("tamanoFuente").value);
-        doc.setFont(fuente, "normal");
-        doc.setFontSize(tamano);
-        doc.text(text, X, Y);
-
-        return doc;
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       MÓDULO 2 y 5 — IMAGEN → PDF  (guardarPDFv2)
-
-       valorEnmendado:
-         0          → comportamiento normal (Imagen→PDF, modelo 2)
-         > 0        → se resta al margen superior de cada página
-                      antes de dibujar (Enmendados V2, modelo 5)
-       ───────────────────────────────────────────────────────────── */
-
-      function generarArrayPalabras() {
-        let globalpalabras = [];
-        const editor = document.getElementById("editor");
-
-        function procesarNodo(nodo, estiloHeredado) {
-          if (nodo.nodeType === Node.TEXT_NODE) {
-            const tokens = nodo.textContent.split(/\s+/).filter(t => t.length > 0);
-            tokens.forEach(token => {
-              globalpalabras.push({ palabra: token, estilo: estiloHeredado });
-            });
-          } else if (nodo.nodeType === Node.ELEMENT_NODE) {
-            const style = (nodo.getAttribute("style") || "").replace(/\s/g, "").toLowerCase();
-            const tag   = nodo.tagName.toLowerCase();
-
-            let isBold   = estiloHeredado === "bold"   || estiloHeredado === "bolditalic";
-            let isItalic = estiloHeredado === "italic" || estiloHeredado === "bolditalic";
-
-            if (tag === "b" || tag === "strong")                                        isBold   = true;
-            if (style.includes("font-weight:bold") || style.includes("font-weight:700")) isBold   = true;
-            if (tag === "i" || tag === "em")                                            isItalic = true;
-            if (style.includes("font-style:italic"))                                    isItalic = true;
-
-            let nuevoEstilo;
-            if      (isBold && isItalic) nuevoEstilo = "bolditalic";
-            else if (isBold)             nuevoEstilo = "bold";
-            else if (isItalic)           nuevoEstilo = "italic";
-            else                         nuevoEstilo = estiloHeredado;
-
-            nodo.childNodes.forEach(hijo => procesarNodo(hijo, nuevoEstilo));
-          }
-        }
-
-        editor.childNodes.forEach(nodo => procesarNodo(nodo, "normal"));
-        return globalpalabras;
-      }
-
-      /**
-       * Detecta los espacios/tabs/nbsp que preceden al primer token de texto
-       * en el editor y devuelve su ancho en píxeles de canvas.
-       */
-      function medirSangriaInicialPx(ctx) {
-        const editor = document.getElementById("editor");
-
-        function buscarTextoInicial(nodo) {
-          if (nodo.nodeType === Node.TEXT_NODE) return nodo.textContent;
-          if (nodo.nodeType === Node.ELEMENT_NODE) {
-            for (const hijo of nodo.childNodes) {
-              const r = buscarTextoInicial(hijo);
-              if (r !== null) return r;
-            }
-          }
-          return null;
-        }
-
-        let textoInicial = null;
-        for (const nodo of editor.childNodes) {
-          textoInicial = buscarTextoInicial(nodo);
-          if (textoInicial !== null) break;
-        }
-
-        if (!textoInicial) return 0;
-
-        // Espacios/tabs/nbsp al inicio del primer nodo de texto
-        const match = textoInicial.match(/^[\s\u00a0\t]+/);
-        if (!match) return 0;
-
-        // Normalizamos: tab → 4 espacios, nbsp → espacio
-        const espaciosNorm = match[0].replace(/\t/g, "    ").replace(/\u00a0/g, " ");
-
-        const confgFuente    = getFuenteConfig();
-        const tamanoFuentePx = confgFuente.tamanoFuente * 2.333;
-        ctx.font = tamanoFuentePx + "px " + confgFuente.fuente;
-
-        return ctx.measureText(espaciosNorm).width;
-      }
-
-      function aplicarEstiloFuente(estilo) {
-        const confgFuente    = getFuenteConfig();
-        const tamanoFuentePx = confgFuente.tamanoFuente * 2.333;
-        const fuente         = confgFuente.fuente;
-
-        switch (estilo) {
-          case "bold":       return "700 " + tamanoFuentePx + "px " + fuente;
-          case "italic":     return "italic " + tamanoFuentePx + "px " + fuente;
-          case "bolditalic": return "italic 700 " + tamanoFuentePx + "px " + fuente;
-          default:           return tamanoFuentePx + "px " + fuente;
-        }
-      }
-
-      /**
-       * Divide palabras en líneas respetando anchoUtilPx.
-       * anchoFirstLinePx (opcional): ancho reducido solo para la línea 0
-       * (se usa cuando hay sangría inicial).
-       */
-      function dividirPalabrasEnLineas(ctx, palabras, anchoUtilPx, anchoFirstLinePx) {
-        const anchoL0 = (anchoFirstLinePx !== undefined) ? anchoFirstLinePx : anchoUtilPx;
-
-        let lineas = [];
-        let linea  = [];
-
-        palabras.forEach(p => {
-          const testLinea   = [...linea, p];
-          // La primera línea usa anchoL0; el resto anchoUtilPx
-          const anchoLimite = (lineas.length === 0) ? anchoL0 : anchoUtilPx;
-          let anchoTest     = 0;
-
-          testLinea.forEach((w, i) => {
-            ctx.font   = aplicarEstiloFuente(w.estilo);
-            anchoTest += ctx.measureText(w.palabra).width;
-            if (i < testLinea.length - 1) anchoTest += ctx.measureText(" ").width;
-          });
-
-          if (anchoTest > anchoLimite && linea.length > 0) {
-            lineas.push(linea);
-            linea = [p];
-          } else {
-            linea.push(p);
-          }
-        });
-
-        if (linea.length > 0) lineas.push(linea);
-        return lineas;
-      }
-
-      /**
-       * Dibuja una línea justificada en canvas.
-       * anchoEfectivoPx: ancho real disponible para justificar
-       *   (puede diferir de anchoUtilPx cuando hay sangría en la primera línea).
-       */
-      function dibujarJustificado(ctx, palabrasLinea, xInicial, y, anchoEfectivoPx, esUltimaLinea) {
-        if (palabrasLinea.length <= 1 || esUltimaLinea) {
-          let x = xInicial;
-          palabrasLinea.forEach(p => {
-            ctx.font = aplicarEstiloFuente(p.estilo);
-            ctx.fillText(p.palabra, x, y);
-            x += ctx.measureText(p.palabra).width + ctx.measureText(" ").width;
-          });
-          return;
-        }
-
-        let anchoPalabras = 0;
-        palabrasLinea.forEach((p, i) => {
-          ctx.font       = aplicarEstiloFuente(p.estilo);
-          anchoPalabras += ctx.measureText(p.palabra).width;
-          if (i < palabrasLinea.length - 1) anchoPalabras += ctx.measureText(" ").width;
-        });
-
-        const espacioExtra = (anchoEfectivoPx - anchoPalabras) / (palabrasLinea.length - 1);
-        let x = xInicial;
-
-        palabrasLinea.forEach((p, idx) => {
-          ctx.font = aplicarEstiloFuente(p.estilo);
-          ctx.fillText(p.palabra, x, y);
-          if (idx < palabrasLinea.length - 1) {
-            x += ctx.measureText(p.palabra).width + ctx.measureText(" ").width + espacioExtra;
-          }
-        });
-      }
-
-      /**
-       * guardarPDFv2(valorEnmendado = 0)
-       *
-       * Modelo 2 → llamar con 0  (sin reducción de margen superior)
-       * Modelo 5 → llamar con el valor de #entradaEnmendados (mm a restar)
-       *
-       * Además aplica sangría inicial medida en el editor para la
-       * primera línea de texto encontrada.
-       */
-      async function guardarPDFv2(valorEnmendado = 0) {
-        const { jsPDF } = window.jspdf;
-
-        const imgX = 1391, imgY = 1800;
-        const factorPxPorMmX = imgX / tamanoPagina.letter.x;
-        const factorPxPorMmY = imgY / tamanoPagina.letter.y;
-
-        const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [imgX, imgY] });
-
-        const globalpalabras  = generarArrayPalabras();
-        const renglonInicial  = parseInt(document.getElementById("renglonInicial").value);
-        const maxLineas       = tamanoPagina.letter.l;
-        const comenzarFrente  = document.getElementById("comenzarFrente").value;
-        const justificar      = document.getElementById("justificarTexto").checked;
-
-        let pagina     = (comenzarFrente === "1") ? 1 : 2;
-        let primera    = true;          // true mientras estemos en la primera página
-        let idxPalabra = 0;
-        let sangriaYaAplicada = false;  // la sangría solo va en la primera línea de texto
-
-        while (idxPalabra < globalpalabras.length) {
-          const canvas  = document.createElement("canvas");
-          canvas.width  = imgX;
-          canvas.height = imgY;
-          const ctx = canvas.getContext("2d");
-
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = "black";
-
-          // Márgenes en mm con reducción de enmendado, convertidos a px
-          const margenesMm = obtenerMargenes(pagina, valorEnmendado);
-          const margenesPx = {
-            sup:   margenesMm.sup   * factorPxPorMmY,
-            izq:   margenesMm.izq   * factorPxPorMmX,
-            UtilY: margenesMm.UtilY * factorPxPorMmY,
-            UtilX: margenesMm.UtilX * factorPxPorMmX
-          };
-
-          const altoUtilPx  = margenesPx.UtilY;
-          const lineHeight  = calcularLineHeight(altoUtilPx, maxLineas);
-          const anchoUtilPx = margenesPx.UtilX;
-
-          // Posición vertical inicial y líneas disponibles en esta página
-          let y, lineasDisponibles;
-          if (primera && renglonInicial > 1) {
-            y                 = margenesPx.sup + (renglonInicial * lineHeight) - lineHeight;
-            lineasDisponibles = maxLineas - renglonInicial + 1;
-          } else {
-            y                 = margenesPx.sup;
-            lineasDisponibles = maxLineas;
-          }
-
-          // Medimos sangría UNA vez antes de dividir, para que la línea 0
-          // ya se parta con el ancho correcto (anchoUtilPx - sangriaPx)
-          const sangriaPx   = (!sangriaYaAplicada) ? medirSangriaInicialPx(ctx) : 0;
-          const anchoL0     = anchoUtilPx - sangriaPx;
-
-          // Partimos las palabras restantes en líneas según el ancho útil
-          const lineas = dividirPalabrasEnLineas(
-            ctx,
-            globalpalabras.slice(idxPalabra),
-            anchoUtilPx,
-            (!sangriaYaAplicada) ? anchoL0 : undefined
-          );
-
-          let idxLinea = 0;
-          while (idxLinea < lineasDisponibles && idxLinea < lineas.length) {
-            const esUltimaLinea = (idxLinea === lineas.length - 1);
-
-            // Sangría: solo en la primera línea de texto del documento
-            let xInicial      = margenesPx.izq;
-            let anchoEfectivo = anchoUtilPx;
-
-            if (!sangriaYaAplicada) {
-              if (sangriaPx > 0) {
-                xInicial      += sangriaPx;
-                anchoEfectivo  = anchoL0;
-              }
-              sangriaYaAplicada = true;
-            }
-
-            if (justificar) {
-              dibujarJustificado(ctx, lineas[idxLinea], xInicial, y, anchoEfectivo, esUltimaLinea);
-            } else {
-              // Sin justificación: dibujamos palabra a palabra desde xInicial
-              let x = xInicial;
-              lineas[idxLinea].forEach(p => {
-                ctx.font = aplicarEstiloFuente(p.estilo);
-                ctx.fillText(p.palabra, x, y);
-                x += ctx.measureText(p.palabra).width + ctx.measureText(" ").width;
-              });
-            }
-
-            y += lineHeight;
-            idxLinea++;
-          }
-
-          // Avanzamos el índice global de palabras por las líneas dibujadas
-          idxPalabra += lineas.slice(0, idxLinea).reduce((acc, l) => acc + l.length, 0);
-
-          const imgData = canvas.toDataURL("image/jpeg", 1.0);
-          if (!primera) pdf.addPage();
-          pdf.addImage(imgData, "JPEG", 0, 0, imgX, imgY);
-
-          primera = false;
-          pagina++;
-        }
-
-        return pdf;
-      }
-
-
-      /* ─────────────────────────────────────────────────────────────
-       INICIALIZACIÓN
-       ───────────────────────────────────────────────────────────── */
-
-      let mensajeInicio;
-      document.addEventListener("DOMContentLoaded", () => {
-
+        let lista = [];
+        try { const s = localStorage.getItem(keyProtocolarPDF); lista = s ? JSON.parse(s) : []; if (!Array.isArray(lista)) lista = []; }
+        catch (e) { lista = []; }
+        const idx = lista.findIndex(a => a.nombre === ajustes.nombre);
+        if (idx >= 0) lista[idx] = ajustes; else lista.push(ajustes);
+        localStorage.setItem(keyProtocolarPDF, JSON.stringify(lista));
+        document.getElementById("ajustesEtiqueta").innerText = "Ajuste activo: " + ajustes.nombre;
         actualizarListbox();
-        const lista = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
-        if (lista.length > 0) {
-          mensajeInicio = 'Márgenes cargados: ' + cargarAjuste(0);
-        } else {
-          aplicarValoresDefault();
-          mensajeInicio = 'Márgenes por defecto';
-        }
-
-        mostrarEntradasBoxs(document.getElementById("modeloversion").value);
-        ListarCopiasHTML();
-        cambiarladopagina("1");
-        actualizarStatus('✅DOM cargado; ' + mensajeInicio);
+        const nuevoIdx = lista.findIndex(a => a.nombre === ajustes.nombre);
+        const select = document.getElementById("listaAjustes");
+        if (select && nuevoIdx >= 0) select.value = nuevoIdx;
+      } catch (err) { console.error(err); }
+    }
+    function cargarAjuste(index) {
+      const lista = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
+      const ajuste = lista[index];
+      if (!ajuste) return;
+      document.getElementById("frenteSup").value          = ajuste.frenteSup;
+      document.getElementById("frenteIzq").value          = ajuste.frenteIzq;
+      document.getElementById("frenteCampoUtilY").value   = ajuste.frenteCampoUtilY;
+      document.getElementById("frenteCampoUtilX").value   = ajuste.frenteCampoUtilX;
+      document.getElementById("vueloSup").value           = ajuste.vueloSup;
+      document.getElementById("vueloIzq").value           = ajuste.vueloIzq;
+      document.getElementById("vueloCampoUtilY").value    = ajuste.vueloCampoUtilY;
+      document.getElementById("vueloCampoUtilX").value    = ajuste.vueloCampoUtilX;
+      document.getElementById("tamanoFuente").value       = ajuste.tamanoFuente;
+      document.getElementById("fuente").value             = ajuste.fuente;
+      document.getElementById("interlineadoAuto").checked = ajuste.interlineadoAuto;
+      document.getElementById("interlineadoManual").value = ajuste.interlineadoManual;
+      document.getElementById("ajustesEtiqueta").innerText = "Ajuste activo: " + ajuste.nombre;
+      document.getElementById("nombreAjustes").value = ajuste.nombre;
+      const select = document.getElementById("listaAjustes");
+      if (select) select.value = index;
+      return ajuste.nombre;
+    }
+    function actualizarListbox() {
+      const lista = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
+      const select = document.getElementById("listaAjustes");
+      select.innerHTML = "";
+      lista.forEach((ajuste, i) => {
+        const option = document.createElement("option");
+        option.value = i; option.textContent = ajuste.nombre;
+        select.appendChild(option);
       });
+    }
+    function borrarAjustes() {
+      localStorage.removeItem(keyProtocolarPDF);
+      const select = document.getElementById("listaAjustes");
+      if (select) select.innerHTML = "";
+      document.getElementById("ajustesEtiqueta").innerText = "Ningún ajuste cargado";
+      alert("⚠️ Todos los ajustes han sido eliminados");
+    }
 
-    </script>
+    function GuardarCopiaHTML() {
+      const contenidoHTML = document.getElementById("editor").innerHTML;
+      let copias = JSON.parse(localStorage.getItem(keyCopiasHTML)) || [];
+      const editorTexto = document.getElementById("editor").innerText || "";
+      const textoLimpio = editorTexto.replace(/\s+/g, " ").trim();
+      const prefijoArchivo = textoLimpio.substring(0, 150);
+      const copia = { fecha: new Date().toLocaleString(), prefijo: prefijoArchivo, html: contenidoHTML };
+      copias.push(copia);
+      try { localStorage.setItem(keyCopiasHTML, JSON.stringify(copias)); }
+      catch (e) { alert("⚠️ localStorage lleno. Limpiar historial."); }
+    }
+    function ListarCopiasHTML() {
+      const lista = JSON.parse(localStorage.getItem(keyCopiasHTML)) || [];
+      const contenedor = document.getElementById("lvlistaCopiasHTML");
+      contenedor.innerHTML = "";
+      if (lista.length === 0) { contenedor.innerHTML = '<div class="item" style="cursor:default;color:var(--ink-faint);">No hay copias guardadas.</div>'; return; }
+      lista.forEach((copia, index) => {
+        const item = document.createElement("div");
+        item.className = "item";
+        item.textContent = `#${index + 1}  ${copia.fecha}  —  ${copia.prefijo}`;
+        item.addEventListener("click", () => { document.getElementById("editor").innerHTML = copia.html; });
+        contenedor.appendChild(item);
+      });
+    }
+    function BorrarHistorialCopias() {
+      localStorage.removeItem(keyCopiasHTML);
+      document.getElementById("lvlistaCopiasHTML").innerHTML = '<div class="item" style="cursor:default;color:var(--ink-faint);">Historial borrado.</div>';
+    }
 
-
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("sw.js")
-          .then(() => console.log("Service Worker registrado"))
-          .catch((err) => console.error("Error al registrar SW:", err));
+    function generarNombreArchivo() {
+      const nombreConfig = document.getElementById("nombreAjustes").value.trim();
+      const prefijo = document.getElementById("prefijoArchivo").value.trim();
+      const ahora = new Date();
+      const y = ahora.getFullYear(), mo = String(ahora.getMonth()+1).padStart(2,'0'), d = String(ahora.getDate()).padStart(2,'0');
+      const h = String(ahora.getHours()).padStart(2,'0'), mi = String(ahora.getMinutes()).padStart(2,'0');
+      let nombre = "";
+      if (nombreConfig) nombre += nombreConfig;
+      if (prefijo) nombre += (nombre ? "-" : "") + prefijo;
+      nombre += (nombre ? "-" : "") + `${y}-${mo}-${d}-${h}-${mi}.pdf`;
+      return nombre;
+    }
+    async function ejecutarPDF(pdfEnmemoria) {
+      if (!pdfEnmemoria) { alert("⚠️ PDF no creado."); return; }
+      const blob = pdfEnmemoria.output("blob");
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a"); link.href = blobUrl; link.target = "_blank"; link.rel = "noopener";
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    async function descargarPDF(pdfEnmemoria) {
+      if (!pdfEnmemoria) { alert("⚠️ PDF no creado."); return; }
+      pdfEnmemoria.save("v2-" + generarNombreArchivo());
+    }
+    function crearDocumento() {
+      const { jsPDF } = window.jspdf;
+      return new jsPDF({ orientation: "portrait", unit: "mm", format: [tamanoPagina.letter.x, tamanoPagina.letter.y] });
+    }
+    function configurarFuente(doc) {
+      const estilo = document.getElementById("selectorEstiloEnmendados").value;
+      const cf = getFuenteConfig();
+      doc.setFont(cf.fuente, estilo); doc.setFontSize(cf.tamanoFuente);
+    }
+    function obtenerMargenes(pagina, valorEnmendado = 0) {
+      let m;
+      if (pagina % 2 !== 0) {
+        m = { sup: parseFloat(document.getElementById("frenteSup").value), izq: parseFloat(document.getElementById("frenteIzq").value), UtilY: parseFloat(document.getElementById("frenteCampoUtilY").value), UtilX: parseFloat(document.getElementById("frenteCampoUtilX").value) };
+      } else {
+        m = { sup: parseFloat(document.getElementById("vueloSup").value), izq: parseFloat(document.getElementById("vueloIzq").value), UtilY: parseFloat(document.getElementById("vueloCampoUtilY").value), UtilX: parseFloat(document.getElementById("vueloCampoUtilX").value) };
       }
-    </script>
+      if (valorEnmendado > 0) m.sup -= valorEnmendado;
+      return m;
+    }
+    function calcularLineHeight(altoUtil, maxLineasPorPagina) {
+      const usarAuto = document.getElementById("interlineadoAuto").checked;
+      return usarAuto ? altoUtil / maxLineasPorPagina : parseFloat(document.getElementById("interlineadoManual").value);
+    }
 
-  </body>
+    async function Start() {
+      const seleccion = document.getElementById("modeloversion").value;
+      const accionPDF = document.getElementById("accionPDF").value;
+      let pdfResultado = null;
+      if      (seleccion === "2") { pdfResultado = await guardarPDFv2(0);                   pdfGlobal          = pdfResultado; }
+      else if (seleccion === "1") { pdfResultado = await guardarPDFEnmendado();             pdfGlobalEnmendado = pdfResultado; }
+      else if (seleccion === "3") { pdfResultado = enumeracionDeFolios();                   pdfGlobal          = pdfResultado; }
+      else if (seleccion === "4") { pdfResultado = EscrituraAmano();                        pdfGlobal          = pdfResultado; }
+      else if (seleccion === "5") { const v = parseFloat(document.getElementById("entradaEnmendados").value)||0; pdfResultado = await guardarPDFv2(v); pdfGlobalEnmendado = pdfResultado; }
+      if (!pdfResultado) return;
+      if (accionPDF === "1") ejecutarPDF(pdfResultado); else descargarPDF(pdfResultado);
+      if (["1","2","5"].includes(seleccion)) { GuardarCopiaHTML(); actualizarStatus("✅ " + document.getElementById("ajustesEtiqueta").innerText); }
+      else actualizarStatus("✅ PDF generado");
+    }
+
+    function obtenerTextoEditorV1() {
+      const editor = document.getElementById("editor");
+      let texto = editor.innerText.replace(/\r\n/g, "\n");
+      let lineas = texto.split("\n");
+      while (lineas.length > 0 && lineas[0].trim() === "") lineas.shift();
+      const primera = lineas.length > 0 ? lineas[0] : "";
+      const resto = lineas.slice(1).join(" ");
+      return primera + (resto ? " " + resto : "");
+    }
+    function calcularRenglonInicialV1() {
+      const editor = document.getElementById("editor");
+      function buscarPrimerNodoTexto(nodo) {
+        if (nodo.nodeType === Node.TEXT_NODE && nodo.textContent.trim().length > 0) return nodo;
+        for (const hijo of nodo.childNodes) { const r = buscarPrimerNodoTexto(hijo); if (r) return r; }
+        return null;
+      }
+      const primerNodo = buscarPrimerNodoTexto(editor);
+      if (!primerNodo) return 1;
+      const range = document.createRange(); range.setStart(primerNodo,0); range.setEnd(primerNodo,1);
+      const rectTexto = range.getBoundingClientRect();
+      const rectEditor = editor.getBoundingClientRect();
+      const lineHeightPx = parseFloat(window.getComputedStyle(editor).lineHeight);
+      const renglon = Math.round((rectTexto.top - rectEditor.top) / lineHeightPx) + 1;
+      return Math.max(1, renglon);
+    }
+    function actualizarLineaDeInicion() {
+      const ri = document.getElementById("renglonInicial");
+      if (ri) { const v = calcularRenglonInicialV1(); ri.value = v; actualizarStatus("📃 Renglón de inicio: " + v); }
+    }
+    function justificarLineaPDF(doc, texto, xInicial, y, anchoUtil, esUltimaLinea) {
+      const palabras = texto.split(" ");
+      if (palabras.length <= 1 || esUltimaLinea) { doc.text(texto, xInicial, y); return; }
+      const anchoLinea = doc.getTextWidth(texto);
+      const espacioExtra = (anchoUtil - anchoLinea) / (palabras.length - 1);
+      let x = xInicial;
+      palabras.forEach((p, idx) => { doc.text(p, x, y); if (idx < palabras.length-1) x += doc.getTextWidth(p+" ") + espacioExtra; });
+    }
+    function dibujarLineas(doc, lineas, paginaInicial, renglonInicial, maxLineasPorPagina, valorEnmendado) {
+      let pagina = paginaInicial, y, lineasDisponibles = maxLineasPorPagina, lineasUsadas = 0, renglonesAplicados = false;
+      lineas.forEach((ln, i) => {
+        const m = obtenerMargenes(pagina, valorEnmendado);
+        const lineHeight = calcularLineHeight(m.UtilY, maxLineasPorPagina);
+        if (lineasUsadas === 0) {
+          if (!renglonesAplicados) { y = m.sup + (renglonInicial-1)*lineHeight; lineasDisponibles = maxLineasPorPagina-(renglonInicial-1); renglonesAplicados = true; }
+          else { y = m.sup; lineasDisponibles = maxLineasPorPagina; }
+        }
+        const justificar = document.getElementById("justificarTexto").checked;
+        const esUltima = i === lineas.length-1;
+        if (justificar) justificarLineaPDF(doc, ln, m.izq, y, m.UtilX, esUltima);
+        else doc.text(ln, m.izq, y);
+        y += lineHeight; lineasUsadas++;
+        if (lineasUsadas >= lineasDisponibles && i !== lineas.length-1) { doc.addPage(); pagina++; lineasUsadas = 0; lineasDisponibles = maxLineasPorPagina; }
+      });
+    }
+    async function guardarPDFEnmendado() {
+      const comenzarFrente = document.getElementById("comenzarFrente").value;
+      let paginaInicial = (comenzarFrente === "1") ? 1 : 2;
+      const valorEnmendado = parseFloat(document.getElementById("entradaEnmendados").value) || 0;
+      const doc = crearDocumento(); const texto = obtenerTextoEditorV1(); configurarFuente(doc);
+      const anchoUtil = parseFloat(document.getElementById("frenteCampoUtilX").value);
+      const renglonInicial = parseInt(document.getElementById("renglonInicial").value);
+      const lineas = doc.splitTextToSize(texto, anchoUtil);
+      dibujarLineas(doc, lineas, paginaInicial, renglonInicial, tamanoPagina.letter.l, valorEnmendado);
+      return doc;
+    }
+
+    function numeroALetras(num) {
+      const un = ["","UNO","DOS","TRES","CUATRO","CINCO","SEIS","SIETE","OCHO","NUEVE"];
+      const esp = ["DIEZ","ONCE","DOCE","TRECE","CATORCE","QUINCE","DIECISÉIS","DIECISIETE","DIECIOCHO","DIECINUEVE"];
+      const dec = ["","","VEINTE","TREINTA","CUARENTA","CINCUENTA","SESENTA","SETENTA","OCHENTA","NOVENTA"];
+      const cen = ["","CIENTO","DOSCIENTOS","TRESCIENTOS","CUATROCIENTOS","QUINIENTOS","SEISCIENTOS","SETECIENTOS","OCHOCIENTOS","NOVECIENTOS"];
+      if (num===0) return "CERO"; if (num===100) return "CIEN"; if (num===1000) return "MIL";
+      if (num<10) return un[num]; if (num<20) return esp[num-10];
+      if (num<100) { if (num===20) return "VEINTE"; if (num>20&&num<30) return "VEINTI"+un[num%10]; return dec[Math.floor(num/10)]+(num%10!==0?" Y "+un[num%10]:""); }
+      if (num<1000) return cen[Math.floor(num/100)]+(num%100!==0?" "+numeroALetras(num%100):"");
+      return num.toString();
+    }
+    function enumeracionDeFolios() {
+      const inicio=parseInt(document.getElementById("gNumeracionI").value,10), fin=parseInt(document.getElementById("gNumeracionE").value,10);
+      const X=parseInt(document.getElementById("gNumeracionX").value,10), Y=parseInt(document.getElementById("gNumeracionY").value,10);
+      if (isNaN(inicio)||isNaN(fin)||inicio>fin) { alert("⚠️ Verificar valores"); return null; }
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:[tamanoPagina.letter.x,tamanoPagina.letter.y]});
+      const fuente=document.getElementById("fuente").value, tamano=parseInt(document.getElementById("gEnnuneracionTamanoFuente").value);
+      doc.setFont(fuente,"normal"); doc.setFontSize(tamano);
+      for (let i=inicio;i<=fin;i++) { doc.text(numeroALetras(i),X,Y); if (i<fin) doc.addPage(); }
+      return doc;
+    }
+    function EscrituraAmano() {
+      const X=parseInt(document.getElementById("EscrituraAmanoX").value,10), Y=parseInt(document.getElementById("EscrituraAmanoY").value,10);
+      const text=document.getElementById("EscrituraAmanoText").value;
+      if (isNaN(X)||isNaN(Y)) return null;
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:[tamanoPagina.letter.x,tamanoPagina.letter.y]});
+      const fuente=document.getElementById("fuente").value, tamano=parseInt(document.getElementById("tamanoFuente").value);
+      doc.setFont(fuente,"normal"); doc.setFontSize(tamano); doc.text(text,X,Y);
+      return doc;
+    }
+
+    function generarArrayPalabras() {
+      let gp = []; const editor = document.getElementById("editor");
+      function procesarNodo(nodo, estiloHeredado) {
+        if (nodo.nodeType === Node.TEXT_NODE) {
+          nodo.textContent.split(/\s+/).filter(t=>t.length>0).forEach(token => gp.push({palabra:token,estilo:estiloHeredado}));
+        } else if (nodo.nodeType === Node.ELEMENT_NODE) {
+          const style=(nodo.getAttribute("style")||"").replace(/\s/g,"").toLowerCase(), tag=nodo.tagName.toLowerCase();
+          let isBold=estiloHeredado==="bold"||estiloHeredado==="bolditalic", isItalic=estiloHeredado==="italic"||estiloHeredado==="bolditalic";
+          if (tag==="b"||tag==="strong"||style.includes("font-weight:bold")||style.includes("font-weight:700")) isBold=true;
+          if (tag==="i"||tag==="em"||style.includes("font-style:italic")) isItalic=true;
+          const ne = isBold&&isItalic?"bolditalic":isBold?"bold":isItalic?"italic":estiloHeredado;
+          nodo.childNodes.forEach(hijo=>procesarNodo(hijo,ne));
+        }
+      }
+      editor.childNodes.forEach(nodo=>procesarNodo(nodo,"normal")); return gp;
+    }
+    function medirSangriaInicialPx(ctx) {
+      const editor=document.getElementById("editor");
+      function buscarTextoInicial(nodo) {
+        if (nodo.nodeType===Node.TEXT_NODE) return nodo.textContent;
+        if (nodo.nodeType===Node.ELEMENT_NODE) { for (const hijo of nodo.childNodes) { const r=buscarTextoInicial(hijo); if (r!==null) return r; } }
+        return null;
+      }
+      let textoInicial=null;
+      for (const nodo of editor.childNodes) { textoInicial=buscarTextoInicial(nodo); if (textoInicial!==null) break; }
+      if (!textoInicial) return 0;
+      const match=textoInicial.match(/^[\s\u00a0\t]+/);
+      if (!match) return 0;
+      const espaciosNorm=match[0].replace(/\t/g,"    ").replace(/\u00a0/g," ");
+      const cf=getFuenteConfig(); const tamPx=cf.tamanoFuente*2.333;
+      ctx.font=tamPx+"px "+cf.fuente;
+      return ctx.measureText(espaciosNorm).width;
+    }
+    function aplicarEstiloFuente(estilo) {
+      const cf=getFuenteConfig(); const tamPx=cf.tamanoFuente*2.333; const f=cf.fuente;
+      switch(estilo) {
+        case "bold": return "700 "+tamPx+"px "+f;
+        case "italic": return "italic "+tamPx+"px "+f;
+        case "bolditalic": return "italic 700 "+tamPx+"px "+f;
+        default: return tamPx+"px "+f;
+      }
+    }
+    function dividirPalabrasEnLineas(ctx, palabras, anchoUtilPx, anchoFirstLinePx) {
+      const anchoL0=(anchoFirstLinePx!==undefined)?anchoFirstLinePx:anchoUtilPx;
+      let lineas=[], linea=[];
+      palabras.forEach(p => {
+        const testLinea=[...linea,p]; const anchoLimite=(lineas.length===0)?anchoL0:anchoUtilPx; let anchoTest=0;
+        testLinea.forEach((w,i) => { ctx.font=aplicarEstiloFuente(w.estilo); anchoTest+=ctx.measureText(w.palabra).width; if (i<testLinea.length-1) anchoTest+=ctx.measureText(" ").width; });
+        if (anchoTest>anchoLimite&&linea.length>0) { lineas.push(linea); linea=[p]; } else linea.push(p);
+      });
+      if (linea.length>0) lineas.push(linea); return lineas;
+    }
+    function dibujarJustificado(ctx, palabrasLinea, xInicial, y, anchoEfectivoPx, esUltimaLinea) {
+      if (palabrasLinea.length<=1||esUltimaLinea) {
+        let x=xInicial; palabrasLinea.forEach(p => { ctx.font=aplicarEstiloFuente(p.estilo); ctx.fillText(p.palabra,x,y); x+=ctx.measureText(p.palabra).width+ctx.measureText(" ").width; }); return;
+      }
+      let anchoPalabras=0;
+      palabrasLinea.forEach((p,i) => { ctx.font=aplicarEstiloFuente(p.estilo); anchoPalabras+=ctx.measureText(p.palabra).width; if (i<palabrasLinea.length-1) anchoPalabras+=ctx.measureText(" ").width; });
+      const espacioExtra=(anchoEfectivoPx-anchoPalabras)/(palabrasLinea.length-1); let x=xInicial;
+      palabrasLinea.forEach((p,idx) => { ctx.font=aplicarEstiloFuente(p.estilo); ctx.fillText(p.palabra,x,y); if (idx<palabrasLinea.length-1) x+=ctx.measureText(p.palabra).width+ctx.measureText(" ").width+espacioExtra; });
+    }
+    async function guardarPDFv2(valorEnmendado=0) {
+      const {jsPDF}=window.jspdf;
+      const imgX=1391,imgY=1800;
+      const factorPxPorMmX=imgX/tamanoPagina.letter.x, factorPxPorMmY=imgY/tamanoPagina.letter.y;
+      const pdf=new jsPDF({orientation:"portrait",unit:"px",format:[imgX,imgY]});
+      const globalpalabras=generarArrayPalabras();
+      const renglonInicial=parseInt(document.getElementById("renglonInicial").value);
+      const maxLineas=tamanoPagina.letter.l;
+      const comenzarFrente=document.getElementById("comenzarFrente").value;
+      const justificar=document.getElementById("justificarTexto").checked;
+      let pagina=(comenzarFrente==="1")?1:2, primera=true, idxPalabra=0, sangriaYaAplicada=false;
+      while (idxPalabra<globalpalabras.length) {
+        const canvas=document.createElement("canvas"); canvas.width=imgX; canvas.height=imgY;
+        const ctx=canvas.getContext("2d");
+        ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle="black";
+        const mMm=obtenerMargenes(pagina,valorEnmendado);
+        const mPx={sup:mMm.sup*factorPxPorMmY,izq:mMm.izq*factorPxPorMmX,UtilY:mMm.UtilY*factorPxPorMmY,UtilX:mMm.UtilX*factorPxPorMmX};
+        const altoUtilPx=mPx.UtilY, lineHeight=calcularLineHeight(altoUtilPx,maxLineas), anchoUtilPx=mPx.UtilX;
+        let y, lineasDisponibles;
+        if (primera&&renglonInicial>1) { y=mPx.sup+(renglonInicial*lineHeight)-lineHeight; lineasDisponibles=maxLineas-renglonInicial+1; }
+        else { y=mPx.sup; lineasDisponibles=maxLineas; }
+        const sangriaPx=(!sangriaYaAplicada)?medirSangriaInicialPx(ctx):0;
+        const anchoL0=anchoUtilPx-sangriaPx;
+        const lineas=dividirPalabrasEnLineas(ctx,globalpalabras.slice(idxPalabra),anchoUtilPx,(!sangriaYaAplicada)?anchoL0:undefined);
+        let idxLinea=0;
+        while (idxLinea<lineasDisponibles&&idxLinea<lineas.length) {
+          const esUltimaLinea=(idxLinea===lineas.length-1);
+          let xInicial=mPx.izq, anchoEfectivo=anchoUtilPx;
+          if (!sangriaYaAplicada) { if (sangriaPx>0) { xInicial+=sangriaPx; anchoEfectivo=anchoL0; } sangriaYaAplicada=true; }
+          if (justificar) dibujarJustificado(ctx,lineas[idxLinea],xInicial,y,anchoEfectivo,esUltimaLinea);
+          else { let x=xInicial; lineas[idxLinea].forEach(p => { ctx.font=aplicarEstiloFuente(p.estilo); ctx.fillText(p.palabra,x,y); x+=ctx.measureText(p.palabra).width+ctx.measureText(" ").width; }); }
+          y+=lineHeight; idxLinea++;
+        }
+        idxPalabra+=lineas.slice(0,idxLinea).reduce((acc,l)=>acc+l.length,0);
+        const imgData=canvas.toDataURL("image/jpeg",1.0);
+        if (!primera) pdf.addPage();
+        pdf.addImage(imgData,"JPEG",0,0,imgX,imgY);
+        primera=false; pagina++;
+      }
+      return pdf;
+    }
+
+    let mensajeInicio;
+    document.addEventListener("DOMContentLoaded", () => {
+      actualizarListbox();
+      const lista = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
+      if (lista.length > 0) { mensajeInicio = 'Márgenes cargados: ' + cargarAjuste(0); }
+      else { aplicarValoresDefault(); mensajeInicio = 'Márgenes por defecto'; }
+      mostrarEntradasBoxs(document.getElementById("modeloversion").value);
+      ListarCopiasHTML();
+      cambiarladopagina("1");
+      actualizarStatus('✅ DOM listo — ' + mensajeInicio);
+
+      // Restore saved theme
+      const savedTheme = localStorage.getItem('protocolarTheme');
+      if (savedTheme === 'light') applyTheme('light');
+    });
+
+    function toggleTheme() {
+      const isLight = document.body.classList.contains('theme-light');
+      applyTheme(isLight ? 'dark' : 'light');
+    }
+
+    function applyTheme(theme) {
+      const btn = document.getElementById('btnTheme');
+      if (theme === 'light') {
+        document.body.classList.add('theme-light');
+        btn.textContent = '🌙';
+        btn.title = 'Cambiar a tema oscuro';
+      } else {
+        document.body.classList.remove('theme-light');
+        btn.textContent = '☀️';
+        btn.title = 'Cambiar a tema claro';
+      }
+      localStorage.setItem('protocolarTheme', theme);
+    }
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("Service Worker registrado"))
+        .catch(err => console.error("SW error:", err));
+    }
+  </script>
+</body>
 </html>
