@@ -1,9 +1,12 @@
+// 🔧 Configuración: cambia solo estas dos constantes
+const PROJECT_NAME = "ProtocolarPDF"; // nombre del proyecto
+const VERSION = "v4";                 // versión actual
 
-const CACHE_NAME = "protocolar-cache-v2"; // cambia el número al actualizar
+const CACHE_NAME = `${PROJECT_NAME}-cache-${VERSION}`;
 const FILES_TO_CACHE = [
-  "/ProtocolarPDF/",          // index
-  "/ProtocolarPDF/icono.jpg", // ícono
-  "/ProtocolarPDF/manifest.json"
+  `/${PROJECT_NAME}/`,          // index
+  `/${PROJECT_NAME}/icono.jpg`, // ícono
+  `/${PROJECT_NAME}/manifest.json`
 ];
 
 // Instalación: guarda archivos
@@ -11,7 +14,7 @@ self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
   );
-  self.skipWaiting(); // fuerza instalación inmediata
+  self.skipWaiting(); // activa inmediatamente
 });
 
 // Activación: limpia cachés viejas
