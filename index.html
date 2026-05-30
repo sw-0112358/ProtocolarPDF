@@ -2299,12 +2299,30 @@
           ctx.lineTo(RULER_W, RULER_H - SLIDER_H - 2);
           ctx.stroke();
 
-          // Etiqueta FRENTE/VUELTO
           const lado = document.getElementById('comenzarFrente').value;
+          const ladoLabel = lado === '1' ? 'FRENTE' : 'VUELTO';
+
+          // Etiqueta izquierda: FRENTE/VUELTO · margen izq
           ctx.fillStyle = isLight ? '#2b579a' : '#555';
           ctx.font      = '700 8px DM Sans, sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText(lado === '1' ? 'FRENTE' : 'VUELTO', 4, 10);
+          ctx.fillText(ladoLabel, 4, 10);
+
+          ctx.fillStyle = isLight ? '#888' : '#444';
+          ctx.font      = '600 7px JetBrains Mono, monospace';
+          ctx.fillText('margen izq', 4, 20);
+
+          // Etiqueta derecha: margen der · mm restantes — siempre en rojo
+          const restante = Math.round(216 - (izqMm + utilXMm));
+          ctx.fillStyle = '#e8392a';
+          ctx.font      = '700 8px DM Sans, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(ladoLabel, RULER_W - 4, 10);
+
+          ctx.font      = '600 7px JetBrains Mono, monospace';
+          ctx.fillText('der · +' + restante + 'mm', RULER_W - 4, 20);
+
+
 
           // Guías verticales de margen
           _guia(ctx, izqPx, isLight ? '#2b579a' : '#e8392a');
@@ -2348,10 +2366,17 @@
 
           // Número de mm encima del triángulo
           const mm = (side === 'L') ? Math.round(izqMm) : Math.round(izqMm + utilXMm);
-          ctx.fillStyle = '#fff';
-          ctx.font      = '700 7px JetBrains Mono, monospace';
+          ctx.fillStyle = '#1a7a3a';
+          ctx.font      = '700 10px JetBrains Mono, monospace';
           ctx.textAlign = 'center';
           ctx.fillText(mm, cx, baseY - 2);
+
+          // Etiqueta debajo del triángulo
+          const etiqueta = (side === 'L') ? 'izq' : 'der';
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.font      = '6px DM Sans, sans-serif';
+          ctx.fillText(etiqueta, cx, baseY + h - 1);
+
         }
 
         // ── Drag logic ──
@@ -2431,8 +2456,9 @@
 
             // Tooltip mientras arrastra
             const val = dragging === 'L'
-            ? `izq: ${izqMm.toFixed(1)} mm`
-            : `utilX: ${utilXMm.toFixed(1)} mm  |  der: ${(izqMm + utilXMm).toFixed(1)} mm`;
+            ? `Margen Izquierdo: ${izqMm.toFixed(1)} mm`
+            : `Margen Derecho: ${Math.round(216 - (izqMm + utilXMm))} mm`;
+
             tooltip.textContent = val;
             const rect = canvas.getBoundingClientRect();
             const touch = e.touches ? e.touches[0] : e;
@@ -2603,10 +2629,10 @@
           ctx.stroke();
 
           // Etiqueta mm a la izquierda del triángulo
-          ctx.fillStyle = '#fff';
-          ctx.font      = '700 7px JetBrains Mono, monospace';
-          ctx.textAlign = 'right';
-          ctx.fillText(labelMm, baseX - 2, cy + 3);
+          ctx.fillStyle = '#1a7a3a';
+          ctx.font      = '700 10px JetBrains Mono, monospace';
+          ctx.textAlign = 'Rift';
+          ctx.fillText(labelMm, baseX + 12, cy + 3);
         }
 
         // ── Drag ──
