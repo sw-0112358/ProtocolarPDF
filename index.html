@@ -1443,6 +1443,7 @@
       let visorPDFDoc    = null;  // documento pdf.js cargado
       let visorPaginaActual = 1;
       let visorTotalPaginas = 1;
+      let modoVisorActivo = false;
       window._reglasSyncFns = [];
 
       const margenesDefault = {
@@ -1462,8 +1463,9 @@
         document.getElementById('editor').style.display       = 'none';
         document.getElementById('linenumbers').style.display  = 'none';
         document.getElementById('canvasPDF').style.display    = 'block';
-        document.querySelector('.ruler-wrap').style.display   = 'none';
-        document.querySelector('.ruler-v-wrap').style.display = 'none';
+
+        modoVisorActivo = true;
+
         // Toolbar
         document.getElementById('toolbar-group1').style.display = 'none';
         document.getElementById('idControlesEditores').style.display = 'none';
@@ -1478,8 +1480,8 @@
         document.getElementById('editor').style.display       = 'block';
         document.getElementById('linenumbers').style.display  = 'block';
 
-        document.querySelector('.ruler-wrap').style.display   = 'block';
-        document.querySelector('.ruler-v-wrap').style.display = 'block';
+        modoVisorActivo = false;
+
         // Toolbar
 
         document.getElementById('toolbar-group2').style.display = 'none';
@@ -2427,9 +2429,7 @@
           const tooltip = document.getElementById('rulerTooltip');
           const { x, y } = canvasCoords(e, canvas);
 
-          // Tooltip hover
-          const hit = dragging || hitSlider(x, y);
-          if (hit || dragging) {
+          if (dragging) {
             canvas.style.cursor = 'ew-resize';
           } else {
             canvas.style.cursor = 'default';
@@ -2438,39 +2438,35 @@
           if (dragging) {
             e.preventDefault();
             const deltaMm = (x - startX) / PX_PER_MM;
-
             if (dragging === 'L') {
-              // Mover margen izquierdo; el derecho se mantiene fijo (UtilX compensa)
               const nuevoIzq = Math.max(0, Math.min(startIzq + deltaMm, startIzq + startUtil - 5));
-              const delta    = nuevoIzq - izqMm;
               izqMm   = nuevoIzq;
               utilXMm = Math.max(5, startUtil - (nuevoIzq - startIzq));
             } else {
-              // Mover margen derecho → cambia UtilX
               const nuevoDer = Math.max(izqMm + 5, Math.min(xToMm(x), MM_TOTAL));
               utilXMm = nuevoDer - izqMm;
             }
-
             escribirMargenes();
             dibujarRegla();
-
-            // Tooltip mientras arrastra
             const val = dragging === 'L'
             ? `Margen Izquierdo: ${izqMm.toFixed(1)} mm`
             : `Margen Derecho: ${Math.round(216 - (izqMm + utilXMm))} mm`;
-
             tooltip.textContent = val;
             const rect = canvas.getBoundingClientRect();
             const touch = e.touches ? e.touches[0] : e;
             tooltip.style.left = ((touch.clientX - rect.left) / rect.width * 100) + '%';
             tooltip.classList.add('visible');
           } else {
-            // Tooltip hover normal
-            const mm = xToMm(x).toFixed(1);
-            tooltip.textContent = mm + ' mm';
-            tooltip.style.left  = (x / RULER_W * 100) + '%';
-            if (y >= RULER_H - SLIDER_H - 4) {
-              tooltip.classList.add('visible');
+            canvas.style.cursor = hitSlider(x, y) ? 'ew-resize' : 'default';
+            if (modoVisorActivo) {
+              const mm = xToMm(x).toFixed(1);
+              tooltip.textContent = mm + ' mm';
+              tooltip.style.left  = (x / RULER_W * 100) + '%';
+              if (y >= RULER_H - SLIDER_H - 4) {
+                tooltip.classList.add('visible');
+              } else {
+                tooltip.classList.remove('visible');
+              }
             } else {
               tooltip.classList.remove('visible');
             }
@@ -2683,14 +2679,13 @@
             supMm = Math.max(0, Math.min(MM_TOTAL, startSup + (y - startY) / PX_PER_MM));
             escribirMargen();
             dibujar();
-
             tooltip.textContent = `sup: ${supMm.toFixed(1)} mm`;
             const rect = canvas.getBoundingClientRect();
             tooltip.style.top = ((clientY - rect.top) / rect.height * 100) + '%';
             tooltip.classList.add('visible');
           } else {
             canvas.style.cursor = hitTest(x, y) ? 'ns-resize' : 'default';
-            if (x >= RULER_W - SLIDER_W - 6) {
+            if (modoVisorActivo && x >= RULER_W - SLIDER_W - 6) {
               tooltip.textContent = mmFromCanvasY(y).toFixed(1) + ' mm';
               const rect = canvas.getBoundingClientRect();
               tooltip.style.top = ((clientY - rect.top) / rect.height * 100) + '%';
