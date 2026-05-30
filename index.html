@@ -999,6 +999,81 @@
 
 
 
+
+      /* ── Regla con sliders ── */
+      .ruler-wrap {
+        width: 816px;
+        margin: 10px auto 0;
+        position: relative;
+        height: 36px;
+        user-select: none;
+        cursor: default;
+      }
+
+      #rulerCanvas {
+        display: block;
+        width: 816px;
+        height: 36px;
+        border-radius: 3px 3px 0 0;
+      }
+
+      .ruler-tooltip {
+        position: absolute;
+        top: -22px;
+        background: #e8392a;
+        color: #fff;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        pointer-events: none;
+        white-space: nowrap;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.12s;
+        z-index: 10;
+      }
+      .ruler-tooltip.visible { opacity: 1; }
+
+
+      /* ── Regla vertical ── */
+      .ruler-v-wrap {
+        position: absolute;
+        left: -42px;
+        top: 0;
+        width: 36px;
+        height: 1056px;
+        user-select: none;
+        cursor: default;
+      }
+
+      #rulerCanvasV {
+        display: block;
+        width: 36px;
+        height: 1056px;
+        border-radius: 3px 0 0 3px;
+      }
+
+      .ruler-tooltip-v {
+        position: absolute;
+        left: 40px;
+        background: #e8392a;
+        color: #fff;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        pointer-events: none;
+        white-space: nowrap;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.12s;
+        z-index: 10;
+      }
+      .ruler-tooltip-v.visible { opacity: 1; }
+
+
+
     </style>
   </head>
 
@@ -1037,7 +1112,20 @@
         </div>
 
         <!-- editorbox DENTRO del editor-wrap -->
+        <div class="ruler-wrap">
+          <canvas id="rulerCanvas" width="816" height="36"></canvas>
+          <div class="ruler-tooltip" id="rulerTooltip"></div>
+        </div>
+
         <div class="editorbox">
+
+          <!-- REGLA VERTICAL -->
+          <div class="ruler-v-wrap">
+            <canvas id="rulerCanvasV" width="36" height="1056"></canvas>
+            <div class="ruler-tooltip-v" id="rulerTooltipV"></div>
+          </div>
+
+
           <div id="linenumbers" class="line-numbers"></div>
           <div id="editor"
                class="textdeentrada"
@@ -1045,14 +1133,8 @@
                spellcheck="true"
                lang="es">
           </div>
-
-          <!-- canvas DENTRO del editorbox -->
           <canvas id="canvasPDF"
-                  style="display:none;
-                         position:absolute;
-                         top:0; left:0;
-                         width:816px;
-                         height:1056px;">
+                  style="display:none; position:absolute; top:0; left:0; width:816px; height:1056px;">
           </canvas>
         </div>
 
@@ -1071,7 +1153,7 @@
             <option value="1" selected>Frente</option>
             <option value="2">Vuelto</option>
           </select>
-          <button class="btn btn-start" id="btnGenerarPDF" onclick="Start()">▶ Generar PDF</button>
+          <button class="btn btn-start" id="btnGenerarPDF" onclick="Start()">▶ Generar PDF</button>   
         </div>
 
         <div id="toolbar-group2" class="toolbar-group" style="display:none;">
@@ -1097,7 +1179,7 @@
               <span>⚙️</span>
               <span>Configuración de Documento</span>
               <span class="panel-badge">Márgenes · Fuente · Formato</span>
-              <span class="toggle-icon">▼</span>
+              <span class="toggle-icon">▼</span>             
             </button>
 
             <div id="idMostarMenuConf" class="contentPlegable">
@@ -1175,9 +1257,10 @@
                   <div class="form-field" style="flex:1; min-width:180px;">
                     <label class="form-label">Nombre del ajuste</label>
                     <input type="text" id="nombreAjustes" placeholder="Conf1" class="form-input-wide">
-                  </div>
-                  <button class="btn btn-primary" onclick="guardarAjustes()">💾 Guardar</button>
-                  <button class="btn btn-ghost" onclick="restablecerMargenes()">🔄 Reiniciar</button>
+                  </div>      
+                  <span class="btn btn-primary" onclick="guardarAjustes()">💾Margenes</span>
+                  <span class="btn btn-ghost" onclick="restablecerMargenes()">🔄Reiniciar Margenes</span>
+
                   <button class="btn btn-danger" onclick="borrarAjustes()">🗑️ Borrar todo</button>
                 </div>
               </div>
@@ -1278,7 +1361,7 @@
                     <option value="3"selected>Ver y imprimir PDF</option>
 
                   </select>
-                </div>
+                </div>   
               </div>
 
               <!-- Box: Enmendados -->
@@ -1320,7 +1403,6 @@
                   <span style="font-size:11px; color:#888;">Tamaño (pt)</span>
                   <input type="number" id="gEnnuneracionTamanoFuente" value="8" class="form-input" style="width:72px;">
                 </div>
-
               </div>
 
               <!-- Box: Escritura a mano -->
@@ -1329,7 +1411,7 @@
                 <input type="number" id="EscrituraAmanoX"    value="32" class="form-input" style="width:80px;">
                 <input type="number" id="EscrituraAmanoY"    value="49" class="form-input" style="width:80px;">
                 <input type="text"   id="EscrituraAmanoText"            class="form-input-wide" style="width:240px;" placeholder="Texto a escribir…">
-              </div>
+              </div> 
 
             </div><!-- /panel body -->
           </div><!-- /panel -->
@@ -1361,6 +1443,7 @@
       let visorPDFDoc    = null;  // documento pdf.js cargado
       let visorPaginaActual = 1;
       let visorTotalPaginas = 1;
+      window._reglasSyncFns = [];
 
       const margenesDefault = {
         frente: { sup: 48, izq: 32, UtilY: 210, UtilX: 167 },
@@ -1379,6 +1462,8 @@
         document.getElementById('editor').style.display       = 'none';
         document.getElementById('linenumbers').style.display  = 'none';
         document.getElementById('canvasPDF').style.display    = 'block';
+        document.querySelector('.ruler-wrap').style.display   = 'none';
+        document.querySelector('.ruler-v-wrap').style.display = 'none';
         // Toolbar
         document.getElementById('toolbar-group1').style.display = 'none';
         document.getElementById('idControlesEditores').style.display = 'none';
@@ -1393,6 +1478,8 @@
         document.getElementById('editor').style.display       = 'block';
         document.getElementById('linenumbers').style.display  = 'block';
 
+        document.querySelector('.ruler-wrap').style.display   = 'block';
+        document.querySelector('.ruler-v-wrap').style.display = 'block';
         // Toolbar
 
         document.getElementById('toolbar-group2').style.display = 'none';
@@ -1420,7 +1507,7 @@
         if (!BackupDelOriginal) return;
 
         actualizarStatus('🖨️ Preparando impresión...');
-    
+
         try {
           // 1. jsPDF → ArrayBuffer → pdf-lib
           const arrayBuffer = BackupDelOriginal.output('arraybuffer');
@@ -1568,6 +1655,10 @@
         numeros.style.fontFamily = editor.style.fontFamily || "Arial";
         numeros.style.fontSize   = editor.style.fontSize   || "11pt";
         generarNumerosCadena();
+
+
+        (window._reglasSyncFns || []).forEach(fn => fn());
+
       }
 
       function getPaginaLado() {
@@ -1670,8 +1761,10 @@
       function restablecerMargenes() {
         aplicarValoresDefault();
         document.getElementById("interlineadoManual").value = "8.75";
+        cambiarladopagina(document.getElementById("comenzarFrente").value);
         alert("🔄 Márgenes restablecidos a los valores por defecto");
       }
+
       function guardarAjustes() {
         try {
           const nombreInput = document.getElementById("nombreAjustes").value.trim();
@@ -2070,6 +2163,7 @@
       }
 
       let mensajeInicio;
+
       document.addEventListener("DOMContentLoaded", () => {
         actualizarListbox();
         const lista = JSON.parse(localStorage.getItem(keyProtocolarPDF)) || [];
@@ -2087,6 +2181,9 @@
         const savedTheme = localStorage.getItem('protocolarTheme');
         if (savedTheme === 'light') applyTheme('light');  
 
+
+        const canvas = document.getElementById('rulerCanvas');
+        if (!canvas) return;
       });
 
       function toggleTheme() {
@@ -2107,6 +2204,505 @@
         }
         localStorage.setItem('protocolarTheme', theme);
       }
+
+
+      // ══════════════════════════════════════════════════════
+      // REGLA INTERACTIVA CON SLIDERS
+      // ══════════════════════════════════════════════════════
+      (function () {
+        const MM_TOTAL   = 216;
+        const RULER_W    = 816;
+        const RULER_H    = 36;
+        const PX_PER_MM  = RULER_W / MM_TOTAL;   // ~3.778 px/mm
+        const SLIDER_H   = 10;                   // altura del triángulo
+        const SLIDER_HIT = 14;                   // zona de click ampliada
+
+        // Estado en mm
+        let izqMm   = 0;
+        let utilXMm = 0;
+
+        // ── Leer márgenes del formulario según lado ──
+        function leerMargenes() {
+          const lado = document.getElementById('comenzarFrente').value;
+          if (lado === '1') {
+            izqMm   = parseFloat(document.getElementById('frenteIzq').value)        || margenesDefault.frente.izq;
+            utilXMm = parseFloat(document.getElementById('frenteCampoUtilX').value) || margenesDefault.frente.UtilX;
+          } else {
+            izqMm   = parseFloat(document.getElementById('vueloIzq').value)         || margenesDefault.vuelo.izq;
+            utilXMm = parseFloat(document.getElementById('vueloCampoUtilX').value)  || margenesDefault.vuelo.UtilX;
+          }
+        }
+
+        // ── Escribir márgenes al formulario ──
+        function escribirMargenes() {
+          const lado = document.getElementById('comenzarFrente').value;
+          const izqR   = Math.round(izqMm * 10) / 10;
+          const utilR  = Math.round(utilXMm * 10) / 10;
+          if (lado === '1') {
+            document.getElementById('frenteIzq').value        = izqR;
+            document.getElementById('frenteCampoUtilX').value = utilR;
+          } else {
+            document.getElementById('vueloIzq').value         = izqR;
+            document.getElementById('vueloCampoUtilX').value  = utilR;
+          }
+          // Redibujar el editor con los nuevos márgenes
+          cambiarladopagina(lado);
+        }
+
+        // ── Dibujar ──
+        function dibujarRegla() {
+          const canvas = document.getElementById('rulerCanvas');
+          if (!canvas) return;
+          const ctx    = canvas.getContext('2d');
+          const isLight = document.body.classList.contains('theme-light');
+
+          ctx.clearRect(0, 0, RULER_W, RULER_H);
+
+          // Fondo
+          ctx.fillStyle = isLight ? '#dde3ec' : '#161616';
+          ctx.fillRect(0, 0, RULER_W, RULER_H);
+
+          const izqPx = izqMm  * PX_PER_MM;
+          const derPx = (izqMm + utilXMm) * PX_PER_MM;
+
+          // Zona útil resaltada
+          ctx.fillStyle = isLight ? 'rgba(43,87,154,0.10)' : 'rgba(255,255,255,0.05)';
+          ctx.fillRect(izqPx, 0, derPx - izqPx, RULER_H - SLIDER_H - 2);
+
+          // Marcas mm
+          for (let mm = 0; mm <= MM_TOTAL; mm++) {
+            const x = mm * PX_PER_MM;
+            let tickH, color;
+            if (mm % 10 === 0)      { tickH = 10; color = isLight ? '#444' : '#bbb'; }
+            else if (mm % 5 === 0)  { tickH = 7;  color = isLight ? '#777' : '#666'; }
+            else                    { tickH = 4;  color = isLight ? '#aaa' : '#3a3a3a'; }
+            ctx.strokeStyle = color;
+            ctx.lineWidth   = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, tickH);
+            ctx.stroke();
+
+            if (mm % 10 === 0 && mm > 0 && mm < MM_TOTAL) {
+              ctx.fillStyle = isLight ? '#666' : '#888';
+              ctx.font      = '8px JetBrains Mono, monospace';
+              ctx.textAlign = 'center';
+              ctx.fillText(mm, x, 18);
+            }
+          }
+
+          // Línea base
+          ctx.strokeStyle = isLight ? '#bbb' : '#2a2a2a';
+          ctx.lineWidth   = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, RULER_H - SLIDER_H - 2);
+          ctx.lineTo(RULER_W, RULER_H - SLIDER_H - 2);
+          ctx.stroke();
+
+          // Etiqueta FRENTE/VUELTO
+          const lado = document.getElementById('comenzarFrente').value;
+          ctx.fillStyle = isLight ? '#2b579a' : '#555';
+          ctx.font      = '700 8px DM Sans, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(lado === '1' ? 'FRENTE' : 'VUELTO', 4, 10);
+
+          // Guías verticales de margen
+          _guia(ctx, izqPx, isLight ? '#2b579a' : '#e8392a');
+          _guia(ctx, derPx, isLight ? '#2b579a' : '#e8392a');
+
+          // Sliders
+          const baseY = RULER_H - SLIDER_H;
+          _trianguloSlider(ctx, izqPx, baseY, '#e8392a', '#ff7060', 'L');
+          _trianguloSlider(ctx, derPx, baseY, '#e8392a', '#ff7060', 'R');
+        }
+
+        function _guia(ctx, x, color) {
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth   = 1;
+          ctx.globalAlpha = 0.35;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, RULER_H - SLIDER_H - 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        function _trianguloSlider(ctx, cx, baseY, fill, stroke, side) {
+          const w = 9;   // semiancho de la base del triángulo
+          const h = SLIDER_H;
+
+          ctx.beginPath();
+          ctx.moveTo(cx - w, baseY);          // esquina izquierda base
+          ctx.lineTo(cx + w, baseY);          // esquina derecha base
+          ctx.lineTo(cx,     baseY + h);      // punta abajo (vértice)
+          ctx.closePath();
+
+          ctx.fillStyle   = fill;
+          ctx.fill();
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth   = 1.2;
+          ctx.stroke();
+
+          // Número de mm encima del triángulo
+          const mm = (side === 'L') ? Math.round(izqMm) : Math.round(izqMm + utilXMm);
+          ctx.fillStyle = '#fff';
+          ctx.font      = '700 7px JetBrains Mono, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(mm, cx, baseY - 2);
+        }
+
+        // ── Drag logic ──
+        let dragging = null;   // 'L' | 'R' | null
+        let startX   = 0;
+        let startIzq = 0;
+        let startUtil = 0;
+
+        function xToMm(canvasX) {
+          return Math.max(0, Math.min(MM_TOTAL, canvasX / PX_PER_MM));
+        }
+
+        function hitSlider(canvasX, canvasY) {
+          const baseY  = RULER_H - SLIDER_H;
+          if (canvasY < baseY - 4) return null;            // fuera de zona slider
+          const izqPx = izqMm  * PX_PER_MM;
+          const derPx = (izqMm + utilXMm) * PX_PER_MM;
+          if (Math.abs(canvasX - izqPx) <= SLIDER_HIT) return 'L';
+          if (Math.abs(canvasX - derPx) <= SLIDER_HIT) return 'R';
+          return null;
+        }
+
+        function canvasCoords(e, canvas) {
+          const rect  = canvas.getBoundingClientRect();
+          const scaleX = RULER_W / rect.width;
+          const touch  = e.touches ? e.touches[0] : e;
+          return {
+            x: (touch.clientX - rect.left) * scaleX,
+            y: (touch.clientY - rect.top)  * (RULER_H / rect.height)
+          };
+        }
+
+        function onPointerDown(e) {
+          const canvas = document.getElementById('rulerCanvas');
+          const { x, y } = canvasCoords(e, canvas);
+          const hit = hitSlider(x, y);
+          if (!hit) return;
+          e.preventDefault();
+          dragging  = hit;
+          startX    = x;
+          startIzq  = izqMm;
+          startUtil = utilXMm;
+          canvas.style.cursor = 'ew-resize';
+        }
+
+        function onPointerMove(e) {
+          const canvas  = document.getElementById('rulerCanvas');
+          const tooltip = document.getElementById('rulerTooltip');
+          const { x, y } = canvasCoords(e, canvas);
+
+          // Tooltip hover
+          const hit = dragging || hitSlider(x, y);
+          if (hit || dragging) {
+            canvas.style.cursor = 'ew-resize';
+          } else {
+            canvas.style.cursor = 'default';
+          }
+
+          if (dragging) {
+            e.preventDefault();
+            const deltaMm = (x - startX) / PX_PER_MM;
+
+            if (dragging === 'L') {
+              // Mover margen izquierdo; el derecho se mantiene fijo (UtilX compensa)
+              const nuevoIzq = Math.max(0, Math.min(startIzq + deltaMm, startIzq + startUtil - 5));
+              const delta    = nuevoIzq - izqMm;
+              izqMm   = nuevoIzq;
+              utilXMm = Math.max(5, startUtil - (nuevoIzq - startIzq));
+            } else {
+              // Mover margen derecho → cambia UtilX
+              const nuevoDer = Math.max(izqMm + 5, Math.min(xToMm(x), MM_TOTAL));
+              utilXMm = nuevoDer - izqMm;
+            }
+
+            escribirMargenes();
+            dibujarRegla();
+
+            // Tooltip mientras arrastra
+            const val = dragging === 'L'
+            ? `izq: ${izqMm.toFixed(1)} mm`
+            : `utilX: ${utilXMm.toFixed(1)} mm  |  der: ${(izqMm + utilXMm).toFixed(1)} mm`;
+            tooltip.textContent = val;
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            tooltip.style.left = ((touch.clientX - rect.left) / rect.width * 100) + '%';
+            tooltip.classList.add('visible');
+          } else {
+            // Tooltip hover normal
+            const mm = xToMm(x).toFixed(1);
+            tooltip.textContent = mm + ' mm';
+            tooltip.style.left  = (x / RULER_W * 100) + '%';
+            if (y >= RULER_H - SLIDER_H - 4) {
+              tooltip.classList.add('visible');
+            } else {
+              tooltip.classList.remove('visible');
+            }
+          }
+        }
+
+        function onPointerUp() {
+          if (!dragging) return;
+          dragging = null;
+          document.getElementById('rulerCanvas').style.cursor = 'default';
+          document.getElementById('rulerTooltip').classList.remove('visible');
+        }
+
+        // ── Inicialización ──
+        window.dibujarRegla = function () {
+          leerMargenes();
+          dibujarRegla();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const canvas = document.getElementById('rulerCanvas');
+          if (!canvas) return;
+
+          canvas.addEventListener('mousedown',  onPointerDown);
+          window.addEventListener('mousemove',  onPointerMove);
+          window.addEventListener('mouseup',    onPointerUp);
+          canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+          window.addEventListener('touchmove',  onPointerMove, { passive: false });
+          window.addEventListener('touchend',   onPointerUp);
+
+          leerMargenes();
+          dibujarRegla();
+
+          window._reglasSyncFns.push(function() { leerMargenes(); dibujarRegla(); });
+        });
+
+      })();
+
+
+
+
+
+
+      (function () {
+        const MM_TOTAL  = 50;
+        const RULER_W   = 36;
+        const RULER_H   = 1056;
+        // 1056px representa 279mm de página → px por mm
+        const PX_PER_MM = RULER_H / 279;
+        const SLIDER_W  = 10;   // ancho del triángulo (apunta a la derecha)
+        const HIT_ZONE  = 14;
+
+        let supMm = 0;
+
+        function leerMargen() {
+          const lado = document.getElementById('comenzarFrente').value;
+          supMm = lado === '1'
+            ? (parseFloat(document.getElementById('frenteSup').value)  || margenesDefault.frente.sup)
+          : (parseFloat(document.getElementById('vueloSup').value)   || margenesDefault.vuelo.sup);
+        }
+
+        function escribirMargen() {
+          const lado = document.getElementById('comenzarFrente').value;
+          const val  = Math.round(supMm * 10) / 10;
+          if (lado === '1') document.getElementById('frenteSup').value = val;
+          else              document.getElementById('vueloSup').value  = val;
+          cambiarladopagina(lado);
+        }
+
+        function dibujar() {
+          const canvas  = document.getElementById('rulerCanvasV');
+          if (!canvas) return;
+          const ctx     = canvas.getContext('2d');
+          const isLight = document.body.classList.contains('theme-light');
+
+          ctx.clearRect(0, 0, RULER_W, RULER_H);
+
+          // Fondo
+          ctx.fillStyle = isLight ? '#dde3ec' : '#161616';
+          ctx.fillRect(0, 0, RULER_W, RULER_H);
+
+          // Zona sobre el margen (arriba del sup) — gris
+          const supPx = supMm * PX_PER_MM;
+          ctx.fillStyle = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.3)';
+          ctx.fillRect(0, 0, RULER_W - SLIDER_W - 2, supPx);
+
+          // Marcas de mm (0–50 visibles, resto de la regla en blanco)
+          for (let mm = 0; mm <= 279; mm++) {
+            const y = mm * PX_PER_MM;
+            let tickW, color;
+            if      (mm % 10 === 0) { tickW = 11; color = isLight ? '#444' : '#ccc'; }
+            else if (mm % 5  === 0) { tickW = 7;  color = isLight ? '#777' : '#666'; }
+            else                    { tickW = 4;  color = isLight ? '#aaa' : '#3a3a3a'; }
+
+            // Solo dibuja marcas hasta 50mm, el resto solo cada 10
+            if (mm > 50 && mm % 10 !== 0) continue;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth   = 1;
+            ctx.beginPath();
+            ctx.moveTo(RULER_W - SLIDER_W - 2, y);
+            ctx.lineTo(RULER_W - SLIDER_W - 2 - tickW, y);
+            ctx.stroke();
+
+            if (mm % 10 === 0 && mm > 0 && mm <= 50) {
+              ctx.fillStyle = isLight ? '#666' : '#888';
+              ctx.font      = '8px JetBrains Mono, monospace';
+              ctx.textAlign = 'right';
+              ctx.fillText(mm, RULER_W - SLIDER_W - 5, y + 3);
+            }
+          }
+
+          // Línea base vertical
+          ctx.strokeStyle = isLight ? '#bbb' : '#2c2c2c';
+          ctx.lineWidth   = 1;
+          ctx.beginPath();
+          ctx.moveTo(RULER_W - SLIDER_W - 2, 0);
+          ctx.lineTo(RULER_W - SLIDER_W - 2, RULER_H);
+          ctx.stroke();
+
+          // Guía horizontal punteada
+          ctx.save();
+          ctx.strokeStyle = isLight ? '#2b579a' : '#e8392a';
+          ctx.lineWidth   = 1;
+          ctx.globalAlpha = 0.3;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(0, supPx);
+          ctx.lineTo(RULER_W - SLIDER_W - 2, supPx);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          // Triángulo apuntando a la derecha
+          _triangulo(ctx, supPx, Math.round(supMm));
+        }
+
+        function _triangulo(ctx, cy, labelMm) {
+          const baseX = RULER_W - SLIDER_W - 2;
+          const h     = SLIDER_W;
+          const w     = 9;   // semialto de la base
+
+          ctx.shadowColor   = 'rgba(0,0,0,0.35)';
+          ctx.shadowBlur    = 4;
+          ctx.shadowOffsetX = 2;
+          ctx.beginPath();
+          ctx.moveTo(baseX, cy - w);   // esquina superior base
+          ctx.lineTo(baseX, cy + w);   // esquina inferior base
+          ctx.lineTo(baseX + h, cy);   // punta derecha
+          ctx.closePath();
+          ctx.fillStyle   = '#e8392a';
+          ctx.fill();
+          ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0;
+          ctx.strokeStyle = '#ff7060';
+          ctx.lineWidth   = 1.2;
+          ctx.stroke();
+
+          // Etiqueta mm a la izquierda del triángulo
+          ctx.fillStyle = '#fff';
+          ctx.font      = '700 7px JetBrains Mono, monospace';
+          ctx.textAlign = 'right';
+          ctx.fillText(labelMm, baseX - 2, cy + 3);
+        }
+
+        // ── Drag ──
+        let dragging = false;
+        let startY   = 0;
+        let startSup = 0;
+
+        function mmFromCanvasY(cy) {
+          return Math.max(0, Math.min(MM_TOTAL, cy / PX_PER_MM));
+        }
+
+        function hitTest(cx, cy) {
+          const baseX = RULER_W - SLIDER_W - 2;
+          if (cx < baseX - 4) return false;
+          return Math.abs(cy - supMm * PX_PER_MM) <= HIT_ZONE;
+        }
+
+        function coords(e) {
+          const canvas = document.getElementById('rulerCanvasV');
+          const rect   = canvas.getBoundingClientRect();
+          const scaleY = RULER_H / rect.height;
+          const scaleX = RULER_W / rect.width;
+          const src    = e.touches ? e.touches[0] : e;
+          return {
+            x: (src.clientX - rect.left) * scaleX,
+            y: (src.clientY - rect.top)  * scaleY,
+            clientY: src.clientY
+          };
+        }
+
+        function onDown(e) {
+          const { x, y } = coords(e);
+          if (!hitTest(x, y)) return;
+          e.preventDefault();
+          dragging = true;
+          startY   = y;
+          startSup = supMm;
+          document.getElementById('rulerCanvasV').style.cursor = 'ns-resize';
+        }
+
+        function onMove(e) {
+          const canvas  = document.getElementById('rulerCanvasV');
+          const tooltip = document.getElementById('rulerTooltipV');
+          const { x, y, clientY } = coords(e);
+
+          if (dragging) {
+            e.preventDefault();
+            supMm = Math.max(0, Math.min(MM_TOTAL, startSup + (y - startY) / PX_PER_MM));
+            escribirMargen();
+            dibujar();
+
+            tooltip.textContent = `sup: ${supMm.toFixed(1)} mm`;
+            const rect = canvas.getBoundingClientRect();
+            tooltip.style.top = ((clientY - rect.top) / rect.height * 100) + '%';
+            tooltip.classList.add('visible');
+          } else {
+            canvas.style.cursor = hitTest(x, y) ? 'ns-resize' : 'default';
+            if (x >= RULER_W - SLIDER_W - 6) {
+              tooltip.textContent = mmFromCanvasY(y).toFixed(1) + ' mm';
+              const rect = canvas.getBoundingClientRect();
+              tooltip.style.top = ((clientY - rect.top) / rect.height * 100) + '%';
+              tooltip.classList.add('visible');
+            } else {
+              tooltip.classList.remove('visible');
+            }
+          }
+        }
+
+        function onUp() {
+          if (!dragging) return;
+          dragging = false;
+          document.getElementById('rulerCanvasV').style.cursor = 'default';
+          document.getElementById('rulerTooltipV').classList.remove('visible');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const canvas = document.getElementById('rulerCanvasV');
+          if (!canvas) return;
+
+          canvas.addEventListener('mousedown',  onDown);
+          window.addEventListener('mousemove',  onMove);
+          window.addEventListener('mouseup',    onUp);
+          canvas.addEventListener('touchstart', onDown, { passive: false });
+          window.addEventListener('touchmove',  onMove, { passive: false });
+          window.addEventListener('touchend',   onUp);
+
+          leerMargen();
+          dibujar();
+
+          window._reglasSyncFns.push(function() { leerMargen(); dibujar(); });
+        });
+
+      })();
+
+
+
     </script>
 
     <script>
