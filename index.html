@@ -1505,55 +1505,47 @@
         actualizarIndicadorPagina();
       }
 
+      // iframe persistente — se crea una sola vez
+      let iframeImpresion = null;
+
       async function imprimirPaginaActual() {
         if (!BackupDelOriginal) return;
 
         actualizarStatus('🖨️ Preparando impresión...');
 
         try {
-          // 1. jsPDF → ArrayBuffer → pdf-lib
           const arrayBuffer = BackupDelOriginal.output('arraybuffer');
           const { PDFDocument } = window.PDFLib;
           const srcDoc = await PDFDocument.load(arrayBuffer);
 
-          // 2. Crear PDF de una sola página
           const pdfImp = await PDFDocument.create();
           const [pagina] = await pdfImp.copyPages(srcDoc, [visorPaginaActual - 1]);
           pdfImp.addPage(pagina);
 
-          // 3. PDF → blob URL
           const bytes   = await pdfImp.save();
           const blob    = new Blob([bytes], { type: 'application/pdf' });
           const blobUrl = URL.createObjectURL(blob);
 
-          // 4. iframe → print()
-          const iframe = document.createElement('iframe');
-          iframe.style.cssText = 'position:fixed; top:-9999px; left:-9999px; width:1px; height:1px;';
-          document.body.appendChild(iframe);
+          // Crear el iframe solo la primera vez
+          if (!iframeImpresion) {
+            iframeImpresion = document.createElement('iframe');
+            iframeImpresion.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+            document.body.appendChild(iframeImpresion);
+          }
 
-          let yaImprimio = false;
-
-          const disparar = () => {
-            if (yaImprimio) return;
-            yaImprimio = true;
-            try {
-              iframe.contentWindow.focus();
-              iframe.contentWindow.print();
-            } catch (e) {
-              window.open(blobUrl, '_blank');
-            }
+          iframeImpresion.onload = () => {
             setTimeout(() => {
-              if (document.body.contains(iframe)) document.body.removeChild(iframe);
-              URL.revokeObjectURL(blobUrl);
-              actualizarStatus('✅ Impresión enviada — Pág ' + visorPaginaActual);
-            }, 2000);
+              try {
+                iframeImpresion.contentWindow.focus();
+                iframeImpresion.contentWindow.print();
+                actualizarStatus('✅ Impresión enviada — Pág ' + visorPaginaActual);
+              } catch (e) {
+                window.open(blobUrl, '_blank');
+              }
+            }, 500);
           };
 
-          iframe.onload = () => disparar();
-          iframe.src = blobUrl;
-
-          // Fallback por si onload no dispara (algunos navegadores)
-          setTimeout(() => disparar(), 1800);
+          iframeImpresion.src = blobUrl;
 
         } catch (err) {
           actualizarStatus('⚠️ Error al imprimir: ' + err.message);
