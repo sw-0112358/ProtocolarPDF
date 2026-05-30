@@ -16,6 +16,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+
+    <!-- pdf.js — renderizador de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      // Le indica a pdf.js dónde está su worker (proceso separado que decodifica el PDF)
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+
+    <script type="module">
+      import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
+      window.PDFLib = { PDFDocument };
+    </script>
+
+
     <style>
       /* ── Design tokens — PDF / Adobe theme ── */
       :root {
@@ -939,6 +955,50 @@
       .panel > div[style*="padding"] {
         border-top: 1px solid #333;
       }
+
+
+      /* ── Visor PDF ── */
+      #canvasPDF {
+        background: #fff;
+        display: block;
+      }
+
+
+      /* iframe de impresión — siempre oculto */
+      iframe.iframe-impresion {
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        border: none;
+      }
+
+
+      .toolbar {
+        background: #252525;
+        border: 1px solid #3a3a3a;
+        border-radius: var(--r-lg);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 16px;
+        justify-content: center;
+      }
+
+      .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+
+
     </style>
   </head>
 
@@ -956,7 +1016,7 @@
       <div class="header-divider"></div>
       <div class="status-bar">
         <span style="font-size:10px; color:#666;">ESTADO</span>
-        <span id="status">Iniciando…</span>
+        <span id="status">✅…</span>
         <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
       </div>
     </header>
@@ -968,13 +1028,15 @@
       <div class="section-label">Área de edición</div>
 
       <div class="editor-wrap">
+
         <div class="editor-header">
           <div class="editor-dot active"></div>
           <div class="editor-dot"></div>
           <div class="editor-dot"></div>
-          <span class="editor-title-bar">documento.txt — Carta (216 × 279 mm)</span>
+          <span class="editor-title-bar" id="editorTitleBar">documento.txt — Carta (216 × 279 mm)</span>         
         </div>
 
+        <!-- editorbox DENTRO del editor-wrap -->
         <div class="editorbox">
           <div id="linenumbers" class="line-numbers"></div>
           <div id="editor"
@@ -983,294 +1045,308 @@
                spellcheck="true"
                lang="es">
           </div>
+
+          <!-- canvas DENTRO del editorbox -->
+          <canvas id="canvasPDF"
+                  style="display:none;
+                         position:absolute;
+                         top:0; left:0;
+                         width:816px;
+                         height:1056px;">
+          </canvas>
         </div>
+
       </div>
+
 
       <!-- Toolbar -->
       <div class="toolbar">
-        <div class="toolbar-group">
+
+        <div id ="toolbar-group1" class="toolbar-group">
           <button class="btn btn-ghost" onclick="Cleantext()">✨ Limpiar</button>
           <button class="btn btn-primary" onclick="Pegarportapapeles()">📃 Pegar</button>
-        </div>
-
-        <div class="toolbar-sep"></div>
-
-        <div class="toolbar-group">
           <input type="number" id="renglonInicial" value="1" min="1" max="24" class="num-input">
-          <button class="btn btn-ghost" id="btnActualizar" onclick="actualizarLineaDeInicion()">🔄 Detectar inicio</button>
-        </div>
-
-        <div class="toolbar-sep"></div>
-
-        <div class="toolbar-group">
+          <button class="btn btn-ghost" onclick="actualizarLineaDeInicion()">🔄 Detectar inicio</button>
           <select id="comenzarFrente" class="styled-select" onchange="cambiarladopagina(this.value)">
             <option value="1" selected>Frente</option>
             <option value="2">Vuelto</option>
           </select>
+          <button class="btn btn-start" id="btnGenerarPDF" onclick="Start()">▶ Generar PDF</button>
         </div>
 
-        <div class="toolbar-sep"></div>
+        <div id="toolbar-group2" class="toolbar-group" style="display:none;">
 
-        <div class="toolbar-group" style="gap:8px;">
-          <button class="btn btn-start" onclick="Start()">▶ Generar PDF</button>
-          <button class="btn btn-ghost" onclick="MostarMenuPrincipal()">⚙️ Configurar</button>
+          <button class="btn btn-ghost" onclick="paginaAnterior()">◀</button>
+          <span id="indicadorPagina" style="font-size:11px; color:#888; font-family:'JetBrains Mono',monospace; min-width:90px; text-align:center;">Pág 1 de 1</span>
+          <button class="btn btn-ghost" onclick="paginaSiguiente()">▶</button>
+          <button class="btn btn-ghost" onclick="imprimirPaginaActual()">🖨️ Imprimir página</button>
+          <button class="btn btn-ghost" id="btnVolverEditor" onclick="activarModoEditor()">✏️ Editor</button>
+
         </div>
       </div>
 
-      <!-- Main menu (collapsible) -->
-      <div id="classMenuPrincipal" class="contentPlegable" style="padding:0; overflow:visible;">
-        <div class="panel">
-          <!-- Config header -->
-          <button type="button" class="panel-toggle" onclick="MostarMenuConf(); this.classList.toggle('active')">
-            <span>⚙️</span>
-            <span>Configuración de Documento</span>
-            <span class="panel-badge">Márgenes · Fuente · Formato</span>
-            <span class="toggle-icon">▼</span>
-          </button>
 
-          <div id="idMostarMenuConf" class="contentPlegable">
 
-            <!-- Margins -->
-            <div class="config-section" style="margin-top:16px;">
-              <div class="config-section-title">Frente — páginas impares</div>
-              <div class="config-grid">
-                <div class="form-field">
-                  <label class="form-label">Superior (mm)</label>
-                  <input type="number" id="frenteSup" class="form-input">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">Izquierdo (mm)</label>
-                  <input type="number" id="frenteIzq" class="form-input">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">Campo útil Y (mm)</label>
-                  <input type="number" id="frenteCampoUtilY" class="form-input">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">Campo útil X (mm)</label>
-                  <input type="number" id="frenteCampoUtilX" class="form-input">
-                </div>
-              </div>
-            </div>
+      <div id="idControlesEditores" class="contentPlegable" style="padding:0; overflow:visible;">
 
-            <div class="config-section">
-              <div class="config-section-title">Vuelto — páginas pares</div>
-              <div class="config-grid">
-                <div class="form-field">
-                  <label class="form-label">Superior (mm)</label>
-                  <input type="number" id="vueloSup" class="form-input">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">Izquierdo (mm)</label>
-                  <input type="number" id="vueloIzq" class="form-input">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">Campo útil Y (mm)</label>
-                  <input type="number" id="vueloCampoUtilY" class="form-input">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">Campo útil X (mm)</label>
-                  <input type="number" id="vueloCampoUtilX" class="form-input">
+        <!-- Main menu (collapsible) -->
+        <div id="classMenuPrincipal" class="contentPlegable" style="padding:0; overflow:visible;">
+          <div class="panel">
+            <!-- Config header -->
+            <button type="button" class="panel-toggle" onclick="MostarMenuConf(); this.classList.toggle('active')">
+              <span>⚙️</span>
+              <span>Configuración de Documento</span>
+              <span class="panel-badge">Márgenes · Fuente · Formato</span>
+              <span class="toggle-icon">▼</span>
+            </button>
+
+            <div id="idMostarMenuConf" class="contentPlegable">
+
+              <!-- Margins -->
+              <div class="config-section" style="margin-top:16px;">
+                <div class="config-section-title">Frente — páginas impares</div>
+                <div class="config-grid">
+                  <div class="form-field">
+                    <label class="form-label">Superior (mm)</label>
+                    <input type="number" id="frenteSup" class="form-input">
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Izquierdo (mm)</label>
+                    <input type="number" id="frenteIzq" class="form-input">
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Campo útil Y (mm)</label>
+                    <input type="number" id="frenteCampoUtilY" class="form-input">
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Campo útil X (mm)</label>
+                    <input type="number" id="frenteCampoUtilX" class="form-input">
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="config-section">
-              <div class="config-section-title">Interlineado y formato</div>
-              <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div class="toggle-row" style="flex:1; min-width:200px;">
-                  <label>
-                    <input type="checkbox" id="interlineadoAuto" checked>
-                    Interlineado automático
-                  </label>
-                </div>
-                <div class="form-field" style="width:180px;">
-                  <label class="form-label">Manual (mm)</label>
-                  <input type="number" id="interlineadoManual" value="8.75" class="form-input">
-                </div>
-                <div class="toggle-row" style="flex:1; min-width:200px;">
-                  <label>
-                    <input type="checkbox" id="justificarTexto" checked>
-                    Justificar texto
-                  </label>
+              <div class="config-section">
+                <div class="config-section-title">Vuelto — páginas pares</div>
+                <div class="config-grid">
+                  <div class="form-field">
+                    <label class="form-label">Superior (mm)</label>
+                    <input type="number" id="vueloSup" class="form-input">
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Izquierdo (mm)</label>
+                    <input type="number" id="vueloIzq" class="form-input">
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Campo útil Y (mm)</label>
+                    <input type="number" id="vueloCampoUtilY" class="form-input">
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Campo útil X (mm)</label>
+                    <input type="number" id="vueloCampoUtilX" class="form-input">
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="config-section">
-              <div class="config-section-title">Guardar configuración</div>
-              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                <div class="form-field" style="flex:1; min-width:180px;">
-                  <label class="form-label">Nombre del ajuste</label>
-                  <input type="text" id="nombreAjustes" placeholder="Conf1" class="form-input-wide">
+              <div class="config-section">
+                <div class="config-section-title">Interlineado y formato</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                  <div class="toggle-row" style="flex:1; min-width:200px;">
+                    <label>
+                      <input type="checkbox" id="interlineadoAuto" checked>
+                      Interlineado automático
+                    </label>
+                  </div>
+                  <div class="form-field" style="width:180px;">
+                    <label class="form-label">Manual (mm)</label>
+                    <input type="number" id="interlineadoManual" value="8.75" class="form-input">
+                  </div>
+                  <div class="toggle-row" style="flex:1; min-width:200px;">
+                    <label>
+                      <input type="checkbox" id="justificarTexto" checked>
+                      Justificar texto
+                    </label>
+                  </div>
                 </div>
-                <button class="btn btn-primary" onclick="guardarAjustes()">💾 Guardar</button>
-                <button class="btn btn-ghost" onclick="restablecerMargenes()">🔄 Reiniciar</button>
-                <button class="btn btn-danger" onclick="borrarAjustes()">🗑️ Borrar todo</button>
               </div>
-            </div>
 
-          </div><!-- /idMostarMenuConf -->
-
-          <div style="padding: 16px 20px; border-top: 1px solid var(--border-soft);">
-
-            <div class="settings-row">
-              <span class="settings-label">Ajuste activo</span>
-              <select id="listaAjustes" class="styled-select" style="flex:1; max-width:220px;" onchange="cargarAjuste(this.value)"></select>
-              <span id="ajustesEtiqueta" style="font-size:12px; color:#888;">Márgenes Cargados:</span>
-            </div>
-
-            <div class="panel-separator"></div>
-            <div class="config-section-title" style="margin-bottom:8px;">Tipografía</div>
-
-            <div class="font-row">
-              <select id="fuente" class="styled-select" onchange="aplicarFuente(this.value)">
-                <option value="Arial" selected>Arial</option>
-                <option value="Helvetica">Helvetica</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Tahoma">Tahoma</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Book Antiqua">Book Antiqua</option>
-                <option value="Garamond">Garamond</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Courier">Courier</option>
-                <option value="Consolas">Consolas</option>
-                <option value="Lucida Console">Lucida Console</option>
-              </select>
-
-              <select id="fuenteModerna" class="styled-select" onchange="aplicarFuente(this.value)">
-                <option value="0" selected>Estilos Modernos</option>
-                <option value="JetBrains Mono">JetBrains Mono</option>
-                <option value="Source Code Pro">Source Code Pro</option>
-                <option value="Inconsolata">Inconsolata</option>
-                <option value="Ubuntu Mono">Ubuntu Mono</option>
-                <option value="Roboto">Roboto</option>
-                <option value="Open Sans">Open Sans</option>
-                <option value="Lato">Lato</option>
-                <option value="Montserrat">Montserrat</option>
-                <option value="Nunito">Nunito</option>
-                <option value="Poppins">Poppins</option>
-                <option value="Fira Sans">Fira Sans</option>
-              </select>
-
-              <select id="fuenteCompacta" class="styled-select" onchange="aplicarFuente(this.value)">
-                <option value="0" selected>Estilos Compactos</option>
-                <option value="Arial Narrow">Arial Narrow</option>
-                <option value="Roboto Condensed">Roboto Condensed</option>
-                <option value="Open Sans Condensed">Open Sans Condensed</option>
-                <option value="PT Sans Narrow">PT Sans Narrow</option>
-                <option value="Noto Sans Condensed">Noto Sans Condensed</option>
-                <option value="Times New Roman Narrow">Times New Roman Narrow</option>
-                <option value="Merriweather Sans Condensed">Merriweather Sans Condensed</option>
-                <option value="IBM Plex Mono">IBM Plex Mono</option>
-                <option value="Space Mono">Space Mono</option>
-              </select>
-            </div>
-
-            <div id="fuenteEtiqueta" style="font-size:11px; color:var(--red-light); margin-top:6px; font-weight:500;">Fuente en uso: Arial</div>
-
-            <div class="panel-separator"></div>
-
-            <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
-              <div class="form-field">
-                <label class="form-label">Tamaño de fuente (pt)</label>
-                <input type="number" id="tamanoFuente" value="11" class="form-input" style="width:80px;">
+              <div class="config-section">
+                <div class="config-section-title">Guardar configuración</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                  <div class="form-field" style="flex:1; min-width:180px;">
+                    <label class="form-label">Nombre del ajuste</label>
+                    <input type="text" id="nombreAjustes" placeholder="Conf1" class="form-input-wide">
+                  </div>
+                  <button class="btn btn-primary" onclick="guardarAjustes()">💾 Guardar</button>
+                  <button class="btn btn-ghost" onclick="restablecerMargenes()">🔄 Reiniciar</button>
+                  <button class="btn btn-danger" onclick="borrarAjustes()">🗑️ Borrar todo</button>
+                </div>
               </div>
-              <div class="form-field" style="flex:1; min-width:200px;">
-                <label class="form-label">Prefijo del documento</label>
-                <input type="text" id="prefijoArchivo" placeholder="Nombre del documento (opcional)" class="form-input-wide">
+
+            </div><!-- /idMostarMenuConf -->
+
+            <div style="padding: 16px 20px; border-top: 1px solid var(--border-soft);">
+
+              <div class="settings-row">
+                <span class="settings-label">Ajuste activo</span>
+                <select id="listaAjustes" class="styled-select" style="flex:1; max-width:220px;" onchange="cargarAjuste(this.value)"></select>
+                <span id="ajustesEtiqueta" style="font-size:12px; color:#888;">Márgenes Cargados:</span>
               </div>
-            </div>
 
-            <div class="panel-separator"></div>
+              <div class="panel-separator"></div>
+              <div class="config-section-title" style="margin-bottom:8px;">Tipografía</div>
 
-            <!-- Models & PDF action -->
-            <div class="models-row">
-              <div class="form-field" style="min-width:220px;">
-                <label class="form-label">Modelo</label>
-                <select id="modeloversion" class="styled-select" onchange="mostrarEntradasBoxs(this.value)">
-                  <option value="1">Enmendados Interlineados</option>
-                  <option value="2" selected>Imagen → PDF</option>
-                  <option value="3">Generar Enumeración</option>
-                  <option value="4">Escritura a Mano</option>
-                  <option value="5">Enmendados V2 (canvas)</option>
+              <div class="font-row">
+                <select id="fuente" class="styled-select" onchange="aplicarFuente(this.value)">
+                  <option value="Arial" selected>Arial</option>
+                  <option value="Helvetica">Helvetica</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Tahoma">Tahoma</option>
+                  <option value="Trebuchet MS">Trebuchet MS</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Book Antiqua">Book Antiqua</option>
+                  <option value="Garamond">Garamond</option>
+                  <option value="Courier New">Courier New</option>
+                  <option value="Courier">Courier</option>
+                  <option value="Consolas">Consolas</option>
+                  <option value="Lucida Console">Lucida Console</option>
+                </select>
+
+                <select id="fuenteModerna" class="styled-select" onchange="aplicarFuente(this.value)">
+                  <option value="0" selected>Estilos Modernos</option>
+                  <option value="JetBrains Mono">JetBrains Mono</option>
+                  <option value="Source Code Pro">Source Code Pro</option>
+                  <option value="Inconsolata">Inconsolata</option>
+                  <option value="Ubuntu Mono">Ubuntu Mono</option>
+                  <option value="Roboto">Roboto</option>
+                  <option value="Open Sans">Open Sans</option>
+                  <option value="Lato">Lato</option>
+                  <option value="Montserrat">Montserrat</option>
+                  <option value="Nunito">Nunito</option>
+                  <option value="Poppins">Poppins</option>
+                  <option value="Fira Sans">Fira Sans</option>
+                </select>
+
+                <select id="fuenteCompacta" class="styled-select" onchange="aplicarFuente(this.value)">
+                  <option value="0" selected>Estilos Compactos</option>
+                  <option value="Arial Narrow">Arial Narrow</option>
+                  <option value="Roboto Condensed">Roboto Condensed</option>
+                  <option value="Open Sans Condensed">Open Sans Condensed</option>
+                  <option value="PT Sans Narrow">PT Sans Narrow</option>
+                  <option value="Noto Sans Condensed">Noto Sans Condensed</option>
+                  <option value="Times New Roman Narrow">Times New Roman Narrow</option>
+                  <option value="Merriweather Sans Condensed">Merriweather Sans Condensed</option>
+                  <option value="IBM Plex Mono">IBM Plex Mono</option>
+                  <option value="Space Mono">Space Mono</option>
                 </select>
               </div>
-              <div class="form-field" style="min-width:200px;">
-                <label class="form-label">Acción PDF</label>
-                <select id="accionPDF" class="styled-select">
-                  <option value="1" selected>Abrir en nueva ventana</option>
-                  <option value="2">Descargar PDF</option>
+
+              <div id="fuenteEtiqueta" style="font-size:11px; color:var(--red-light); margin-top:6px; font-weight:500;">Fuente en uso: Arial</div>
+
+              <div class="panel-separator"></div>
+
+              <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                <div class="form-field">
+                  <label class="form-label">Tamaño de fuente (pt)</label>
+                  <input type="number" id="tamanoFuente" value="11" class="form-input" style="width:80px;">
+                </div>
+                <div class="form-field" style="flex:1; min-width:200px;">
+                  <label class="form-label">Prefijo del documento</label>
+                  <input type="text" id="prefijoArchivo" placeholder="Nombre del documento (opcional)" class="form-input-wide">
+                </div>
+              </div>
+
+              <div class="panel-separator"></div>
+
+              <!-- Models & PDF action -->
+              <div class="models-row">
+                <div class="form-field" style="min-width:220px;">
+                  <label class="form-label">Modelo</label>
+                  <select id="modeloversion" class="styled-select" onchange="mostrarEntradasBoxs(this.value)">
+                    <option value="1">Enmendados Interlineados</option>
+                    <option value="2" selected>Imagen → PDF</option>
+                    <option value="3">Generar Enumeración</option>
+                    <option value="4">Escritura a Mano</option>
+                    <option value="5">Enmendados V2 (canvas)</option>
+                  </select>
+                </div>
+                <div class="form-field" style="min-width:200px;">
+                  <label class="form-label">Acción PDF</label>
+                  <select id="accionPDF" class="styled-select">
+                    <option value="1">Abrir PDF</option>
+                    <option value="2">Descargar PDF</option>
+                    <option value="3"selected>Ver y imprimir PDF</option>
+
+                  </select>
+                </div>
+              </div>
+
+              <!-- Box: Enmendados -->
+              <div id="boxEnmendados" class="small-box">
+                <div class="etiquetas">Top (mm) · Estilo de letra</div>
+                <input type="number" id="entradaEnmendados" value="3" class="form-input" style="width:90px;">
+                <select id="selectorEstiloEnmendados" class="styled-select" style="width:150px;">
+                  <option value="normal" selected>Normal</option>
+                  <option value="bold">Negrita</option>
+                  <option value="italic">Cursiva</option>
                 </select>
               </div>
-            </div>
 
-            <!-- Box: Enmendados -->
-            <div id="boxEnmendados" class="small-box">
-              <div class="etiquetas">Top (mm) · Estilo de letra</div>
-              <input type="number" id="entradaEnmendados" value="3" class="form-input" style="width:90px;">
-              <select id="selectorEstiloEnmendados" class="styled-select" style="width:150px;">
-                <option value="normal" selected>Normal</option>
-                <option value="bold">Negrita</option>
-                <option value="italic">Cursiva</option>
-              </select>
-            </div>
+              <!-- Box: Enumeración -->
+              <div id="boxGenerarEnnumeracion" class="small-box">
 
-            <!-- Box: Enumeración -->
-            <div id="boxGenerarEnnumeracion" class="small-box">
-
-              <div class="etiquetas">Rango de folios</div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:11px; color:#888;">Desde</span>
-                <input type="number" id="gNumeracionI" value="1"   class="form-input" style="width:72px;">
-                <span style="font-size:11px; color:#888;">Hasta</span>
-                <input type="number" id="gNumeracionE" value="100" class="form-input" style="width:72px;">
-              </div>
-
-              <div class="etiquetas" style="margin-top:10px;">Posición en página (mm)</div>
-              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
-                  <span style="font-size:10px; color:#888;">↕ margen superior</span>
-                  <input type="number" id="gNumeracionY" value="5" class="form-input" style="width:72px;">
+                <div class="etiquetas">Rango de folios</div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-size:11px; color:#888;">Desde</span>
+                  <input type="number" id="gNumeracionI" value="1"   class="form-input" style="width:72px;">
+                  <span style="font-size:11px; color:#888;">Hasta</span>
+                  <input type="number" id="gNumeracionE" value="100" class="form-input" style="width:72px;">
                 </div>
-                <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
-                  <span style="font-size:10px; color:#888;">↔ margen derecho</span>
-                  <input type="number" id="gNumeracionXmax" value="5" class="form-input" style="width:72px;">
+
+                <div class="etiquetas" style="margin-top:10px;">Posición en página (mm)</div>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                    <span style="font-size:10px; color:#888;">↕ margen superior</span>
+                    <input type="number" id="gNumeracionY" value="5" class="form-input" style="width:72px;">
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                    <span style="font-size:10px; color:#888;">↔ margen derecho</span>
+                    <input type="number" id="gNumeracionXmax" value="5" class="form-input" style="width:72px;">
+                  </div>
                 </div>
+
+                <div class="etiquetas" style="margin-top:10px;">Tipografía</div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-size:11px; color:#888;">Tamaño (pt)</span>
+                  <input type="number" id="gEnnuneracionTamanoFuente" value="8" class="form-input" style="width:72px;">
+                </div>
+
               </div>
 
-              <div class="etiquetas" style="margin-top:10px;">Tipografía</div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:11px; color:#888;">Tamaño (pt)</span>
-                <input type="number" id="gEnnuneracionTamanoFuente" value="8" class="form-input" style="width:72px;">
+              <!-- Box: Escritura a mano -->
+              <div id="boxEscrituraAmano" class="small-box">
+                <div class="etiquetas">Posición X / Y (mm)</div>
+                <input type="number" id="EscrituraAmanoX"    value="32" class="form-input" style="width:80px;">
+                <input type="number" id="EscrituraAmanoY"    value="49" class="form-input" style="width:80px;">
+                <input type="text"   id="EscrituraAmanoText"            class="form-input-wide" style="width:240px;" placeholder="Texto a escribir…">
               </div>
 
+            </div><!-- /panel body -->
+          </div><!-- /panel -->
+
+
+          <!-- History -->
+          <div class="section-label" style="margin-top: 8px;">Historial de copias</div>
+          <div class="history-section">
+            <div class="history-toolbar">
+              <span class="history-title">Historial</span>
+              <button class="btn btn-ghost" onclick="ListarCopiasHTML()" style="margin-left:auto;">📃 Actualizar</button>
+              <button class="btn btn-danger" onclick="BorrarHistorialCopias()">✨ Borrar historial</button>
             </div>
-
-            <!-- Box: Escritura a mano -->
-            <div id="boxEscrituraAmano" class="small-box">
-              <div class="etiquetas">Posición X / Y (mm)</div>
-              <input type="number" id="EscrituraAmanoX"    value="32" class="form-input" style="width:80px;">
-              <input type="number" id="EscrituraAmanoY"    value="49" class="form-input" style="width:80px;">
-              <input type="text"   id="EscrituraAmanoText"            class="form-input-wide" style="width:240px;" placeholder="Texto a escribir…">
-            </div>
-
-          </div><!-- /panel body -->
-        </div><!-- /panel -->
-      </div><!-- /classMenuPrincipal -->
-
-      <!-- History -->
-      <div class="section-label" style="margin-top: 8px;">Historial de copias</div>
-      <div class="history-section">
-        <div class="history-toolbar">
-          <span class="history-title">Historial</span>
-          <button class="btn btn-ghost" onclick="ListarCopiasHTML()" style="margin-left:auto;">📃 Actualizar</button>
-          <button class="btn btn-danger" onclick="BorrarHistorialCopias()">✨ Borrar historial</button>
-        </div>
-        <div id="lvlistaCopiasHTML" class="listview"></div>
-      </div>
+            <div id="lvlistaCopiasHTML" class="listview"></div>
+          </div>
+        </div><!-- /classMenuPrincipal -->
+      </div><!-- /controlesedotoreas -->
 
     </main>
 
@@ -1280,6 +1356,12 @@
 
     <!-- ── Main script (logic unchanged) ── -->
     <script>
+
+      // Estado del visor
+      let visorPDFDoc    = null;  // documento pdf.js cargado
+      let visorPaginaActual = 1;
+      let visorTotalPaginas = 1;
+
       const margenesDefault = {
         frente: { sup: 48, izq: 32, UtilY: 210, UtilX: 167 },
         vuelo:  { sup: 32, izq: 17, UtilY: 210, UtilX: 167 }
@@ -1289,12 +1371,150 @@
       const keyCopiasHTML    = 'CopiasHTMLv2';
       let pdfGlobal, pdfGlobalEnmendado;
 
+
+
+      function activarModoVisor() {
+
+        document.getElementById('editorTitleBar').textContent = 'vista-previa.pdf — Carta (216 × 279 mm)';
+        document.getElementById('editor').style.display       = 'none';
+        document.getElementById('linenumbers').style.display  = 'none';
+        document.getElementById('canvasPDF').style.display    = 'block';
+        // Toolbar
+        document.getElementById('toolbar-group1').style.display = 'none';
+        document.getElementById('idControlesEditores').style.display = 'none';
+        document.getElementById('toolbar-group2').style.display = 'flex';
+      }
+
+      function activarModoEditor() {
+
+        document.getElementById('editorTitleBar').textContent = 'documento.txt — Carta (216 × 279 mm)';
+        document.getElementById('canvasPDF').style.display    = 'none';
+
+        document.getElementById('editor').style.display       = 'block';
+        document.getElementById('linenumbers').style.display  = 'block';
+
+        // Toolbar
+
+        document.getElementById('toolbar-group2').style.display = 'none';
+        document.getElementById('toolbar-group1').style.display = 'flex';
+        document.getElementById('idControlesEditores').style.display = 'flex';
+
+        visorPDFDoc       = null;
+        visorPaginaActual = 1;
+      }
+
+      let BackupDelOriginal = null;
+
+      async function cargarPDFenVisor(pdfJsPDF) {
+        // jsPDF → ArrayBuffer → pdf.js
+        BackupDelOriginal = pdfJsPDF;       
+        const arrayBuffer = pdfJsPDF.output('arraybuffer');
+        visorPDFDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        visorTotalPaginas = visorPDFDoc.numPages;
+        visorPaginaActual = 1;
+        await renderizarPaginaVisor(visorPaginaActual);
+        actualizarIndicadorPagina();
+      }
+
+      async function imprimirPaginaActual() {
+        if (!BackupDelOriginal) return;
+
+        actualizarStatus('🖨️ Preparando impresión...');
+    
+        try {
+          // 1. jsPDF → ArrayBuffer → pdf-lib
+          const arrayBuffer = BackupDelOriginal.output('arraybuffer');
+          const { PDFDocument } = window.PDFLib;
+          const srcDoc = await PDFDocument.load(arrayBuffer);
+
+          // 2. Crear PDF de una sola página
+          const pdfImp = await PDFDocument.create();
+          const [pagina] = await pdfImp.copyPages(srcDoc, [visorPaginaActual - 1]);
+          pdfImp.addPage(pagina);
+
+          // 3. PDF → blob URL
+          const bytes   = await pdfImp.save();
+          const blob    = new Blob([bytes], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+
+          // 4. iframe → print()
+          const iframe = document.createElement('iframe');
+          iframe.style.cssText = 'position:fixed; top:-9999px; left:-9999px; width:1px; height:1px;';
+          document.body.appendChild(iframe);
+
+          let yaImprimio = false;
+
+          const disparar = () => {
+            if (yaImprimio) return;
+            yaImprimio = true;
+            try {
+              iframe.contentWindow.focus();
+              iframe.contentWindow.print();
+            } catch (e) {
+              window.open(blobUrl, '_blank');
+            }
+            setTimeout(() => {
+              if (document.body.contains(iframe)) document.body.removeChild(iframe);
+              URL.revokeObjectURL(blobUrl);
+              actualizarStatus('✅ Impresión enviada — Pág ' + visorPaginaActual);
+            }, 2000);
+          };
+
+          iframe.onload = () => disparar();
+          iframe.src = blobUrl;
+
+          // Fallback por si onload no dispara (algunos navegadores)
+          setTimeout(() => disparar(), 1800);
+
+        } catch (err) {
+          actualizarStatus('⚠️ Error al imprimir: ' + err.message);
+          console.error(err);
+        }
+      }
+
+
+      async function renderizarPaginaVisor(numeroPagina) {
+        const pagina  = await visorPDFDoc.getPage(numeroPagina);
+        const canvas  = document.getElementById('canvasPDF');
+        const ctx     = canvas.getContext('2d');
+
+        // Escala para que quepa en 816x1056 (tamaño del editorbox)
+        const viewport = pagina.getViewport({ scale: 1 });
+        const scaleX   = 816  / viewport.width;
+        const scaleY   = 1056 / viewport.height;
+        const scale    = Math.min(scaleX, scaleY);
+
+        const vp = pagina.getViewport({ scale });
+        canvas.width  = vp.width;
+        canvas.height = vp.height;
+
+        await pagina.render({ canvasContext: ctx, viewport: vp }).promise;
+      }
+
+      function actualizarIndicadorPagina() {
+        document.getElementById('indicadorPagina').textContent =
+          `Pág ${visorPaginaActual} de ${visorTotalPaginas}`;
+      }
+
+
+      async function paginaAnterior() {
+        if (visorPaginaActual <= 1) return;
+        visorPaginaActual--;
+        await renderizarPaginaVisor(visorPaginaActual);
+        actualizarIndicadorPagina();
+      }
+
+      async function paginaSiguiente() {
+        if (visorPaginaActual >= visorTotalPaginas) return;
+        visorPaginaActual++;
+        await renderizarPaginaVisor(visorPaginaActual);
+        actualizarIndicadorPagina();
+      }
+
       function MostarMenuConf() {
         document.getElementById("idMostarMenuConf").classList.toggle("show");
       }
-      function MostarMenuPrincipal() {
-        document.getElementById("classMenuPrincipal").classList.toggle("show");
-      }
+
       function mostrarEntradasBoxs(value) {
         const bE = document.getElementById("boxEnmendados");
         const bN = document.getElementById("boxGenerarEnnumeracion");
@@ -1604,15 +1824,34 @@
         const seleccion = document.getElementById("modeloversion").value;
         const accionPDF = document.getElementById("accionPDF").value;
         let pdfResultado = null;
-        if      (seleccion === "2") { pdfResultado = await guardarPDFv2(0);                   pdfGlobal          = pdfResultado; }
-        else if (seleccion === "1") { pdfResultado = await guardarPDFEnmendado();             pdfGlobalEnmendado = pdfResultado; }
-        else if (seleccion === "3") { pdfResultado = enumeracionDeFolios();                   pdfGlobal          = pdfResultado; }
-        else if (seleccion === "4") { pdfResultado = EscrituraAmano();                        pdfGlobal          = pdfResultado; }
-        else if (seleccion === "5") { const v = parseFloat(document.getElementById("entradaEnmendados").value)||0; pdfResultado = await guardarPDFv2(v); pdfGlobalEnmendado = pdfResultado; }
+
+        if      (seleccion === "2") { pdfResultado = await guardarPDFv2(0);        pdfGlobal          = pdfResultado; }
+        else if (seleccion === "1") { pdfResultado = await guardarPDFEnmendado();  pdfGlobalEnmendado = pdfResultado; }
+        else if (seleccion === "3") { pdfResultado = enumeracionDeFolios();        pdfGlobal          = pdfResultado; }
+        else if (seleccion === "4") { pdfResultado = EscrituraAmano();             pdfGlobal          = pdfResultado; }
+        else if (seleccion === "5") {
+          const v = parseFloat(document.getElementById("entradaEnmendados").value) || 0;
+          pdfResultado = await guardarPDFv2(v);
+          pdfGlobalEnmendado = pdfResultado;
+        }
+
         if (!pdfResultado) return;
-        if (accionPDF === "1") ejecutarPDF(pdfResultado); else descargarPDF(pdfResultado);
-        if (["1","2","5"].includes(seleccion)) { GuardarCopiaHTML(); actualizarStatus("✅ " + document.getElementById("ajustesEtiqueta").innerText); }
-        else actualizarStatus("✅ PDF generado");
+
+        if (accionPDF === "3") {
+          await cargarPDFenVisor(pdfResultado);  // ← primero carga
+          activarModoVisor();                    // ← luego muestra
+        } else if (accionPDF === "2") {
+          descargarPDF(pdfResultado);
+        } else if (accionPDF === "1") {
+          ejecutarPDF(pdfResultado);
+        }
+
+        if (["1","2","5"].includes(seleccion)) {
+          GuardarCopiaHTML();
+          actualizarStatus("✅ " + document.getElementById("ajustesEtiqueta").innerText);
+        } else {
+          actualizarStatus("✅ PDF generado");
+        }
       }
 
       function obtenerTextoEditorV1() {
