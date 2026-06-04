@@ -1490,6 +1490,7 @@
 
         visorPDFDoc       = null;
         visorPaginaActual = 1;
+        (window._reglasSyncFns || []).forEach(fn => fn());
       }
 
       let BackupDelOriginal = null;
@@ -1582,7 +1583,8 @@
         if (visorPaginaActual <= 1) return;
         visorPaginaActual--;
         await renderizarPaginaVisor(visorPaginaActual);
-        actualizarIndicadorPagina();
+        actualizarIndicadorPagina();       
+        (window._reglasSyncFns || []).forEach(fn => fn());
       }
 
       async function paginaSiguiente() {
@@ -1590,6 +1592,7 @@
         visorPaginaActual++;
         await renderizarPaginaVisor(visorPaginaActual);
         actualizarIndicadorPagina();
+        (window._reglasSyncFns || []).forEach(fn => fn());
       }
 
       function MostarMenuConf() {
@@ -2200,6 +2203,14 @@
       }
 
 
+
+      function ladoDePaginaActualView() {
+        const inicio = parseInt(document.getElementById('comenzarFrente').value);
+        if (!modoVisorActivo) return String(inicio);
+        const esFrente = ((inicio + visorPaginaActual) % 2) === 0;
+        return esFrente ? '1' : '2';
+      }
+
       // ══════════════════════════════════════════════════════
       // REGLA INTERACTIVA CON SLIDERS
       // ══════════════════════════════════════════════════════
@@ -2217,7 +2228,7 @@
 
         // ── Leer márgenes del formulario según lado ──
         function leerMargenes() {
-          const lado = document.getElementById('comenzarFrente').value;
+          const lado = ladoDePaginaActualView();
           if (lado === '1') {
             izqMm   = parseFloat(document.getElementById('frenteIzq').value)        || margenesDefault.frente.izq;
             utilXMm = parseFloat(document.getElementById('frenteCampoUtilX').value) || margenesDefault.frente.UtilX;
@@ -2514,14 +2525,14 @@
         let supMm = 0;
 
         function leerMargen() {
-          const lado = document.getElementById('comenzarFrente').value;
+          const lado = ladoDePaginaActualView();
           supMm = lado === '1'
             ? (parseFloat(document.getElementById('frenteSup').value)  || margenesDefault.frente.sup)
           : (parseFloat(document.getElementById('vueloSup').value)   || margenesDefault.vuelo.sup);
         }
 
         function escribirMargen() {
-          const lado = document.getElementById('comenzarFrente').value;
+          const lado = ladoDePaginaActualView();
           const val  = Math.round(supMm * 10) / 10;
           if (lado === '1') document.getElementById('frenteSup').value = val;
           else              document.getElementById('vueloSup').value  = val;
