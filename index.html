@@ -652,8 +652,8 @@
       ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 3px; }
       ::-webkit-scrollbar-thumb:hover { background: #555; }
 
-      /* ── Panel flotante (estilo menuFullPantalla de EditorVisorIDE) ── */
-      #idMostarMenuConf {
+      /* ── Panel flotante ── */
+      .MenuFlotante {
         position: fixed;
         top: 50%;
         left: 50%;
@@ -679,16 +679,16 @@
         display: none;
         transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
       }
-      #idMostarMenuConf.show {
+      .MenuFlotante.show {
         display: block;
       }
-      #idMostarMenuConf::-webkit-scrollbar { width: 4px; }
-      #idMostarMenuConf::-webkit-scrollbar-track { background: transparent; }
-      #idMostarMenuConf::-webkit-scrollbar-thumb {
+      .MenuFlotante::-webkit-scrollbar { width: 4px; }
+      .MenuFlotante::-webkit-scrollbar-track { background: transparent; }
+      .MenuFlotante::-webkit-scrollbar-thumb {
         background: rgba(232, 57, 42, 0.3);
         border-radius: 3px;
       }
-      body.theme-light #idMostarMenuConf {
+      body.theme-light .MenuFlotante {
         background: rgba(255, 255, 255, 0.85);
         border-color: rgba(200, 200, 220, 0.5);
         box-shadow:
@@ -1176,7 +1176,7 @@
         </div>
 
         <!-- Menú de configuracion de márgenes -->
-        <div id="idMostarMenuConf" class="contentPlegable">
+        <div id="idMostarMenuConf" class="MenuFlotante">
 
           <div class="config-section" style="margin-top:16px;">
             <div class="config-section-title">Frente — páginas impares</div>
