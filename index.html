@@ -652,11 +652,49 @@
       ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 3px; }
       ::-webkit-scrollbar-thumb:hover { background: #555; }
 
-      /* ── Collapsible sub ── */
+      /* ── Panel flotante (estilo menuFullPantalla de EditorVisorIDE) ── */
       #idMostarMenuConf {
-        border-top: 1px solid #333;
-        margin: 0 -20px;
-        padding: 0 20px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: fit-content(600px);
+        min-width: 320px;
+        max-width: calc(100vw - 40px);
+        max-height: 85vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: rgba(37, 37, 37, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow:
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          0 2px 8px rgba(0, 0, 0, 0.25),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        margin: 0;
+        z-index: 9999;
+        display: none;
+        transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+      }
+      #idMostarMenuConf.show {
+        display: block;
+      }
+      #idMostarMenuConf::-webkit-scrollbar { width: 4px; }
+      #idMostarMenuConf::-webkit-scrollbar-track { background: transparent; }
+      #idMostarMenuConf::-webkit-scrollbar-thumb {
+        background: rgba(232, 57, 42, 0.3);
+        border-radius: 3px;
+      }
+      body.theme-light #idMostarMenuConf {
+        background: rgba(255, 255, 255, 0.85);
+        border-color: rgba(200, 200, 220, 0.5);
+        box-shadow:
+          0 8px 32px rgba(0, 0, 0, 0.12),
+          0 2px 8px rgba(0, 0, 0, 0.06),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
       }
 
       /* ── Settings row ── */
@@ -824,7 +862,6 @@
       }
 
       body.theme-light .contentPlegable { background: transparent; }
-      body.theme-light #idMostarMenuConf { border-top-color: #e0e0e0; }
 
       body.theme-light .config-section-title {
         color: #666;
@@ -1138,6 +1175,90 @@
           </canvas>
         </div>
 
+        <!-- Menú de configuracion de márgenes -->
+        <div id="idMostarMenuConf" class="contentPlegable">
+
+          <div class="config-section" style="margin-top:16px;">
+            <div class="config-section-title">Frente — páginas impares</div>
+            <div class="config-grid">
+              <div class="form-field">
+                <label class="form-label">Superior (mm)</label>
+                <input type="number" id="frenteSup" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Izquierdo (mm)</label>
+                <input type="number" id="frenteIzq" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil Y (mm)</label>
+                <input type="number" id="frenteCampoUtilY" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil X (mm)</label>
+                <input type="number" id="frenteCampoUtilX" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-title">Vuelto — páginas pares</div>
+            <div class="config-grid">
+              <div class="form-field">
+                <label class="form-label">Superior (mm)</label>
+                <input type="number" id="vueloSup" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Izquierdo (mm)</label>
+                <input type="number" id="vueloIzq" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil Y (mm)</label>
+                <input type="number" id="vueloCampoUtilY" class="form-input">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Campo útil X (mm)</label>
+                <input type="number" id="vueloCampoUtilX" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-title">Interlineado y formato</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div class="toggle-row" style="flex:1; min-width:200px;">
+                <label>
+                  <input type="checkbox" id="interlineadoAuto" checked>
+                  Interlineado automático
+                </label>
+              </div>
+              <div class="form-field" style="width:180px;">
+                <label class="form-label">Manual (mm)</label>
+                <input type="number" id="interlineadoManual" value="8.75" class="form-input">
+              </div>
+              <div class="toggle-row" style="flex:1; min-width:200px;">
+                <label>
+                  <input type="checkbox" id="justificarTexto" checked>
+                  Justificar texto
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-title">Guardar configuración</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+              <div class="form-field" style="flex:1; min-width:180px;">
+                <label class="form-label">Nombre del ajuste</label>
+                <input type="text" id="nombreAjustes" placeholder="Conf1" class="form-input-wide">
+              </div>      
+              <span class="btn btn-primary" onclick="guardarAjustes()">💾Margenes</span>
+              <span class="btn btn-ghost" onclick="restablecerMargenes()">🔄Reiniciar Margenes</span>
+
+              <button class="btn btn-danger" onclick="borrarAjustes()">🗑️ Borrar todo</button>
+            </div>
+          </div>
+        </div>
+        <!-- /idMostarMenuConf -->
       </div>
 
 
@@ -1179,93 +1300,8 @@
               <span>⚙️</span>
               <span>Configuración de Documento</span>
               <span class="panel-badge">Márgenes · Fuente · Formato</span>
-              <span class="toggle-icon">▼</span>             
+              <span class="toggle-icon">🔽</span>             
             </button>
-
-            <div id="idMostarMenuConf" class="contentPlegable">
-
-              <!-- Margins -->
-              <div class="config-section" style="margin-top:16px;">
-                <div class="config-section-title">Frente — páginas impares</div>
-                <div class="config-grid">
-                  <div class="form-field">
-                    <label class="form-label">Superior (mm)</label>
-                    <input type="number" id="frenteSup" class="form-input">
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label">Izquierdo (mm)</label>
-                    <input type="number" id="frenteIzq" class="form-input">
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label">Campo útil Y (mm)</label>
-                    <input type="number" id="frenteCampoUtilY" class="form-input">
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label">Campo útil X (mm)</label>
-                    <input type="number" id="frenteCampoUtilX" class="form-input">
-                  </div>
-                </div>
-              </div>
-
-              <div class="config-section">
-                <div class="config-section-title">Vuelto — páginas pares</div>
-                <div class="config-grid">
-                  <div class="form-field">
-                    <label class="form-label">Superior (mm)</label>
-                    <input type="number" id="vueloSup" class="form-input">
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label">Izquierdo (mm)</label>
-                    <input type="number" id="vueloIzq" class="form-input">
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label">Campo útil Y (mm)</label>
-                    <input type="number" id="vueloCampoUtilY" class="form-input">
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label">Campo útil X (mm)</label>
-                    <input type="number" id="vueloCampoUtilX" class="form-input">
-                  </div>
-                </div>
-              </div>
-
-              <div class="config-section">
-                <div class="config-section-title">Interlineado y formato</div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                  <div class="toggle-row" style="flex:1; min-width:200px;">
-                    <label>
-                      <input type="checkbox" id="interlineadoAuto" checked>
-                      Interlineado automático
-                    </label>
-                  </div>
-                  <div class="form-field" style="width:180px;">
-                    <label class="form-label">Manual (mm)</label>
-                    <input type="number" id="interlineadoManual" value="8.75" class="form-input">
-                  </div>
-                  <div class="toggle-row" style="flex:1; min-width:200px;">
-                    <label>
-                      <input type="checkbox" id="justificarTexto" checked>
-                      Justificar texto
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="config-section">
-                <div class="config-section-title">Guardar configuración</div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                  <div class="form-field" style="flex:1; min-width:180px;">
-                    <label class="form-label">Nombre del ajuste</label>
-                    <input type="text" id="nombreAjustes" placeholder="Conf1" class="form-input-wide">
-                  </div>      
-                  <span class="btn btn-primary" onclick="guardarAjustes()">💾Margenes</span>
-                  <span class="btn btn-ghost" onclick="restablecerMargenes()">🔄Reiniciar Margenes</span>
-
-                  <button class="btn btn-danger" onclick="borrarAjustes()">🗑️ Borrar todo</button>
-                </div>
-              </div>
-
-            </div><!-- /idMostarMenuConf -->
 
             <div style="padding: 16px 20px; border-top: 1px solid var(--border-soft);">
 
